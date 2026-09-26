@@ -13,7 +13,7 @@ export function FoundationPicture({ type, className = "" }: { type: FoundationTy
   const src = FOUNDATION_IMAGES[type];
   const name = FOUNDATION_NAMES[type];
   if (src) {
-    return <img src={src} alt={name} className={`picture object-cover ${className}`} />;
+    return <img src={src} alt={name} className={`picture bg-white object-contain ${className}`} />;
   }
   return (
     <div className={`picture picture-empty ${className}`} role="img" aria-label={`Место для изображения: ${name.toLowerCase()}`}>

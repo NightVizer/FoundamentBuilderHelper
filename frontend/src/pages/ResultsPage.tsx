@@ -136,7 +136,7 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
             </div>
             <div className="relative">
               <span className="picture-dot" aria-hidden />
-              <FoundationPicture type={winner.type} className="aspect-[4/3]" />
+              <FoundationPicture type={winner.type} className="aspect-square" />
             </div>
           </div>
           <div className="card-text">
@@ -163,7 +163,7 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
               const text = texts?.[option.type];
               return (
                 <article key={option.type} aria-labelledby={`alt-${option.type}`}>
-                  <FoundationPicture type={option.type} className="aspect-[16/9]" />
+                  <FoundationPicture type={option.type} className="aspect-[4/3]" />
                   <div className="mt-6 flex items-center justify-between gap-6">
                     <h3 id={`alt-${option.type}`} className="alt-name">
                       {FOUNDATION_NAMES[option.type]}
