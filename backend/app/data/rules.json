@@ -1,0 +1,34 @@
+{
+  "foundation_types": ["strip", "slab", "pile", "column"],
+  "base_scores": {
+    "strip": 70,
+    "slab": 65,
+    "pile": 60,
+    "column": 55
+  },
+  "modifiers": {
+    "bearing_capacity": {
+      "low": { "strip": -15, "slab": -10, "pile": 20, "column": 15 },
+      "medium": { "strip": 0, "slab": 0, "pile": 5, "column": 0 },
+      "high": { "strip": 10, "slab": 15, "pile": -5, "column": -10 }
+    },
+    "groundwater_level": {
+      "high": { "strip": -10, "slab": -15, "pile": 15, "column": 10 },
+      "medium": { "strip": -5, "slab": -5, "pile": 5, "column": 5 },
+      "low": { "strip": 5, "slab": 5, "pile": 0, "column": 0 }
+    },
+    "floors_threshold": {
+      "3": { "strip": 5, "slab": 10, "pile": 0, "column": -5 },
+      "4": { "strip": -5, "slab": 15, "pile": 10, "column": -10 }
+    },
+    "seismicity_high": {
+      "types": { "strip": -10, "slab": 15, "pile": 5, "column": -15 }
+    }
+  },
+  "reason_templates": {
+    "strip": ["Подходит для умеренных нагрузок", "Традиционное решение для малоэтажного строительства"],
+    "slab": ["Равномерное распределение нагрузки", "Эффективно на слабых грунтах при большой площади"],
+    "pile": ["Передача нагрузки на глубокие слои", "Рекомендуется при низкой несущей способности"],
+    "column": ["Экономично на сильных грунтах", "Минимальный объём земляных работ"]
+  }
+}

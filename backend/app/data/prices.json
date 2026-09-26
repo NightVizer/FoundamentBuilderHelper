@@ -1,0 +1,21 @@
+{
+  "regions": {
+    "moscow": { "name": "Москва и МО", "coefficient": 1.25 },
+    "spb": { "name": "Санкт-Петербург", "coefficient": 1.15 },
+    "ekb": { "name": "Екатеринбург", "coefficient": 1.0 },
+    "novosibirsk": { "name": "Новосибирск", "coefficient": 0.95 },
+    "krasnodar": { "name": "Краснодар", "coefficient": 1.05 }
+  },
+  "unit_rates_rub_per_m2": {
+    "strip": { "concrete": 8500, "rebar": 3200, "earthworks": 2100, "install": 4500 },
+    "slab": { "concrete": 12000, "rebar": 4800, "earthworks": 1800, "install": 5200 },
+    "pile": { "concrete": 9500, "rebar": 4100, "earthworks": 3500, "install": 7800 },
+    "column": { "concrete": 6200, "rebar": 2800, "earthworks": 1200, "install": 3800 }
+  },
+  "labor_hours_per_m2": {
+    "strip": 2.5,
+    "slab": 3.2,
+    "pile": 4.0,
+    "column": 1.8
+  }
+}
