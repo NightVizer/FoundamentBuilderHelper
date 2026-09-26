@@ -1,0 +1,259 @@
+{
+  "_comment": "Знания для Jev по temp/pictures/translated_foundations.txt. Для каждого типа фундамента и фактора: сила влияния и оценка (verdict + reason) для каждого значения входа. В запрос уходят только оценки для фактических значений. verdict: favourable | acceptable | neutral | unfavourable | excluded. Глубина промерзания в диапазонах формы фронта: shallow до 0,8 м, moderate 0,8-1,5 м, deep 1,5-2,0 м, very_deep более 2,0 м.",
+  "pile": {
+    "soil_type": {
+      "influence": "very strong",
+      "values": {
+        "sand": ["favourable", "Driven piles in sand reach a high bearing capacity, provided a strong bearing layer lies 3 to 10 m below."],
+        "sandy_loam": ["acceptable", "Piles perform satisfactorily in sandy loam when embedded into dense layers."],
+        "loam": ["acceptable", "Piles perform satisfactorily in loam when embedded into dense layers."],
+        "clay": ["favourable", "Dense clay holds piles well by friction along the shaft; soft water-saturated clay needs longer piles."],
+        "fill": ["favourable", "Ideal case for piles: they pass through the heterogeneous fill and bear on the natural strong soil below."]
+      }
+    },
+    "bearing_capacity": {
+      "influence": "very strong",
+      "values": {
+        "low": ["favourable", "Preferred choice: piles pass through the weak layer and transfer the load to deep strong strata."],
+        "medium": ["favourable", "Piles are still effective, especially under large building loads."],
+        "high": ["unfavourable", "The need for piles decreases: cheaper strip or slab foundations carry the load without deep embedment."]
+      }
+    },
+    "groundwater_level": {
+      "influence": "very strong",
+      "values": {
+        "high": ["favourable", "Major indication for piles: they are installed without excavation or concreting in water."],
+        "medium": ["acceptable", "Little influence on the choice; piles remain applicable."],
+        "low": ["acceptable", "Piles lose part of their advantage because strip and slab foundations are easy to build in dry soil."]
+      }
+    },
+    "frost_depth": {
+      "influence": "very strong",
+      "values": {
+        "shallow": ["acceptable", "A shallow strip foundation is a viable cheaper option, so piles have no special advantage."],
+        "moderate": ["acceptable", "Piles are competitive, especially in frost-susceptible soils."],
+        "deep": ["favourable", "Strong advantage for piles: they are simply made to extend below the freezing depth."],
+        "very_deep": ["favourable", "Practically the only reasonable solution: shallow foundations at this freezing depth are uneconomical."]
+      }
+    },
+    "storeys": {
+      "influence": "very strong",
+      "values": {
+        "1-2": ["acceptable", "Light houses use small-diameter screw piles."],
+        "3-5": ["favourable", "Medium-diameter piles or bored piles are used."],
+        "6-10": ["favourable", "Bored or driven reinforced concrete piles are used."],
+        "11-25": ["favourable", "Long driven reinforced concrete piles or a combined pile-slab foundation are used."],
+        "26+": ["favourable", "Piles are the main foundation type for such buildings; piles reach 20 to 40 m."]
+      }
+    },
+    "wall_material": {
+      "influence": "very strong",
+      "values": {
+        "wood": ["acceptable", "Minimal load; small-diameter screw piles are enough."],
+        "aerated_concrete": ["acceptable", "Medium-diameter piles with a mandatory monolithic grillage, because aerated concrete performs poorly in bending."],
+        "brick": ["acceptable", "Strong piles with a reinforced concrete grillage and reduced pile spacing."],
+        "reinforced_concrete": ["favourable", "Maximum load is carried by large-section driven or bored piles with a massive grillage."]
+      }
+    },
+    "seismicity": {
+      "influence": "strong",
+      "values": {
+        "0-6": ["neutral", "Weak influence at this seismicity."],
+        "7": ["acceptable", "Pile bearing capacity must be increased by 20 to 30 percent."],
+        "8+": ["favourable", "One of the preferred solutions: deep support makes piles less prone to failure than shallow foundations; pile tips must rest on rock or dense soil."]
+      }
+    }
+  },
+  "slab": {
+    "soil_type": {
+      "influence": "very strong",
+      "values": {
+        "sand": ["acceptable", "A slab works well on sand but is often excessive, since sand itself is a good base."],
+        "sandy_loam": ["acceptable", "A slab is effective on sandy loam with high moisture content."],
+        "loam": ["favourable", "A slab spreads the load evenly and moves with frost-susceptible, heterogeneous loam as a single unit."],
+        "clay": ["favourable", "A slab spreads the load evenly and moves with frost-susceptible, heterogeneous clay as a single unit."],
+        "fill": ["favourable", "One of the best options: the slab prevents uneven settlement while the fill self-compacts; the base must be compacted."]
+      }
+    },
+    "bearing_capacity": {
+      "influence": "strong",
+      "values": {
+        "low": ["favourable", "Preferred: the large bearing area cuts the pressure on the soil 3 to 5 times compared with a strip."],
+        "medium": ["acceptable", "A slab is effective under large building loads."],
+        "high": ["unfavourable", "A slab is excessive and economically unjustified; a strip foundation is sufficient."]
+      }
+    },
+    "groundwater_level": {
+      "influence": "very strong",
+      "values": {
+        "high": ["favourable", "Major indication for a slab: a waterproofed slab is a reliable barrier and works as a floating structure; uplift must be checked."],
+        "medium": ["acceptable", "Standard slab waterproofing is enough."],
+        "low": ["acceptable", "The advantage of a slab is smaller, but it is still useful on frost-susceptible soils."]
+      }
+    },
+    "frost_depth": {
+      "influence": "strong",
+      "values": {
+        "shallow": ["neutral", "Weak influence; the choice depends on other factors."],
+        "moderate": ["favourable", "An insulated slab effectively counteracts frost heave."],
+        "deep": ["favourable", "An insulated slab with insulated paving prevents freezing under the base and is an alternative to piles."],
+        "very_deep": ["acceptable", "An insulated slab with insulated paving remains an alternative to piles."]
+      }
+    },
+    "storeys": {
+      "influence": "very strong",
+      "values": {
+        "1-2": ["acceptable", "A slab 200 to 300 mm thick is used."],
+        "3-5": ["acceptable", "A thicker slab, up to 400 to 600 mm, is used."],
+        "6-10": ["acceptable", "A slab 400 to 600 mm thick is used."],
+        "11-25": ["acceptable", "Usually built as a combined pile-slab foundation, with the load shared by slab and piles."],
+        "26+": ["unfavourable", "A pure slab is rarely used at this height; it is combined with piles."]
+      }
+    },
+    "wall_material": {
+      "influence": "very strong",
+      "values": {
+        "wood": ["acceptable", "Minimal load; a thin slab 150 to 200 mm is enough."],
+        "aerated_concrete": ["favourable", "Aerated concrete combines well with a stiff slab."],
+        "brick": ["acceptable", "High load; a 300 to 400 mm slab with heavier reinforcement is needed."],
+        "reinforced_concrete": ["acceptable", "Maximum load; a slab at least 400 mm thick is needed, often combined with piles."]
+      }
+    },
+    "seismicity": {
+      "influence": "very strong",
+      "values": {
+        "0-6": ["neutral", "Weak influence at this seismicity."],
+        "7": ["favourable", "A slab is preferred and needs heavier reinforcement."],
+        "8+": ["favourable", "One of the better solutions: a monolithic slab moves with the soil and reduces inertial loads on the building."]
+      }
+    }
+  },
+  "column": {
+    "soil_type": {
+      "influence": "very strong",
+      "values": {
+        "sand": ["favourable", "Best suited when the sand is dry and lies at shallow depth."],
+        "sandy_loam": ["favourable", "Best suited when the sandy loam is dry and lies at shallow depth."],
+        "loam": ["acceptable", "Usable only when the columns are embedded below the freezing depth."],
+        "clay": ["unfavourable", "Frost heave pushes separate columns up unevenly and tilts the building."],
+        "fill": ["unfavourable", "Not recommended: unpredictable settlement of the fill supports the columns unevenly."]
+      }
+    },
+    "bearing_capacity": {
+      "influence": "strong",
+      "values": {
+        "high": ["favourable", "Optimal: each column transfers its load directly to strong soil."],
+        "medium": ["acceptable", "Columns need enlarged footings."],
+        "low": ["unfavourable", "Only for very light structures with columns taken down to a dense layer."]
+      }
+    },
+    "groundwater_level": {
+      "influence": "very strong",
+      "values": {
+        "high": ["unfavourable", "Main contraindication: buoyancy acts on the columns and embedding them in saturated soil is technically difficult."],
+        "medium": ["acceptable", "Columns must be embedded below the water level and waterproofed."],
+        "low": ["favourable", "Ideal: columns sit below the freezing depth in dry dense soil."]
+      }
+    },
+    "frost_depth": {
+      "influence": "very strong",
+      "values": {
+        "shallow": ["favourable", "Optimal: the required embedment is minimal."],
+        "moderate": ["acceptable", "Columns are embedded about 1.0 to 1.8 m; still cheaper than a strip foundation."],
+        "deep": ["unfavourable", "Columns lose their economic advantage; the cost becomes comparable to piles."],
+        "very_deep": ["unfavourable", "Not recommended; piles replace column foundations completely."]
+      }
+    },
+    "storeys": {
+      "influence": "very strong",
+      "values": {
+        "1-2": ["favourable", "The most economical solution for light one-storey buildings; two-storey timber or frame houses need stable soil and low groundwater."],
+        "3-5": ["excluded", "Categorically not used for 3 storeys and above: separate supports lack stiffness and bearing capacity."],
+        "6-10": ["excluded", "Categorically not used for 3 storeys and above: separate supports lack stiffness and bearing capacity."],
+        "11-25": ["excluded", "Categorically not used for 3 storeys and above: separate supports lack stiffness and bearing capacity."],
+        "26+": ["excluded", "Categorically not used for 3 storeys and above: separate supports lack stiffness and bearing capacity."]
+      }
+    },
+    "wall_material": {
+      "influence": "very strong",
+      "values": {
+        "wood": ["favourable", "Ideal: the minimal load allows small columns."],
+        "aerated_concrete": ["acceptable", "Limited use; a monolithic reinforced concrete grade beam is required because aerated concrete performs poorly in bending."],
+        "brick": ["unfavourable", "Not recommended: separate supports do not spread the load of heavy walls evenly."],
+        "reinforced_concrete": ["excluded", "Excluded for reinforced concrete walls."]
+      }
+    },
+    "seismicity": {
+      "influence": "moderate",
+      "values": {
+        "0-6": ["neutral", "Weak influence; columns work without restrictions."],
+        "7": ["acceptable", "Used only to a limited extent, with a mandatory rigid monolithic grade beam."],
+        "8+": ["unfavourable", "Not recommended: separate supports risk overturning in an earthquake."]
+      }
+    }
+  },
+  "strip": {
+    "soil_type": {
+      "influence": "very strong",
+      "values": {
+        "sand": ["favourable", "Coarse and medium sand suit a strip well; fine and silty sand loses bearing capacity when saturated."],
+        "sandy_loam": ["acceptable", "Usable when the sandy loam has low moisture content."],
+        "loam": ["favourable", "Dense loam is an optimal soil for a strip embedded below the freezing depth."],
+        "clay": ["favourable", "Dense clay suits a strip when groundwater is deep."],
+        "fill": ["unfavourable", "The worst soil for a strip: it needs detailed soil analysis, complex construction and high labour input."]
+      }
+    },
+    "bearing_capacity": {
+      "influence": "very strong",
+      "values": {
+        "high": ["favourable", "Optimal: minimal footing width saves concrete."],
+        "medium": ["acceptable", "The footing must be widened."],
+        "low": ["unfavourable", "Needs substantial widening or soil replacement under the footing, which hurts the economics."]
+      }
+    },
+    "groundwater_level": {
+      "influence": "very strong",
+      "values": {
+        "low": ["favourable", "Ideal: the trench stays dry and the soil keeps its bearing capacity."],
+        "medium": ["acceptable", "Drainage and waterproofing of the strip are needed."],
+        "high": ["unfavourable", "Serious limitation: saturated soil loses bearing capacity and deep embedment becomes impractical."]
+      }
+    },
+    "frost_depth": {
+      "influence": "very strong",
+      "values": {
+        "shallow": ["favourable", "Optimal: a shallow strip solves the problem."],
+        "moderate": ["acceptable", "The strip is embedded about 1.0 to 1.8 m; still competitive on stable soils with low groundwater."],
+        "deep": ["unfavourable", "Embedding 1.8 to 2.3 m makes the strip very expensive; priority shifts to piles."],
+        "very_deep": ["unfavourable", "Deepening the strip is economically impractical; the choice shifts to piles."]
+      }
+    },
+    "storeys": {
+      "influence": "very strong",
+      "values": {
+        "1-2": ["favourable", "A shallow or deep strip is used depending on the soil."],
+        "3-5": ["acceptable", "A deep strip with a wider footing and more reinforcement; 5 storeys only on stable high-capacity soil."],
+        "6-10": ["unfavourable", "A pure strip is rarely used above 5 storeys; it is replaced by a slab or piles."],
+        "11-25": ["unfavourable", "A pure strip is rarely used above 5 storeys; it is replaced by a slab or piles."],
+        "26+": ["unfavourable", "A pure strip is rarely used above 5 storeys; it is replaced by a slab or piles."]
+      }
+    },
+    "wall_material": {
+      "influence": "very strong",
+      "values": {
+        "wood": ["acceptable", "Light load; a shallow narrow strip is enough."],
+        "aerated_concrete": ["favourable", "Aerated concrete needs a rigid base, which a reinforced strip provides."],
+        "brick": ["favourable", "The classic solution for heavy brick walls, embedded below the freezing depth."],
+        "reinforced_concrete": ["acceptable", "Maximum load; needs a wide deep strip or a switch to a slab."]
+      }
+    },
+    "seismicity": {
+      "influence": "strong",
+      "values": {
+        "0-6": ["neutral", "Weak influence; a standard strip works without restrictions."],
+        "7": ["acceptable", "A monolithic strip with heavier longitudinal reinforcement is applicable."],
+        "8+": ["unfavourable", "Only limited use: the strip must be tied to a slab or grillage to act jointly."]
+      }
+    }
+  }
+}

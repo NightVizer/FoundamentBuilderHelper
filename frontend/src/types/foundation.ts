@@ -10,7 +10,7 @@ export type RegionId = "krasnodar" | "spb" | "moscow" | "ekb" | "krasnoyarsk";
 /** Тип климата: выбирается вместо региона, бэкенду уходит код типового региона. */
 export type Climate = "mild" | "humid" | "temperate" | "continental" | "sharp";
 
-/** Глубина сезонного промерзания грунта. Бэкенд её не принимает, показываем в сводке. */
+/** Глубина сезонного промерзания грунта: уходит в Jev и в сводку. */
 export type FrostDepth = "shallow" | "moderate" | "deep" | "very_deep";
 
 export interface SiteConditions {
@@ -27,6 +27,7 @@ export interface FoundationInput {
   wall_material: WallMaterial;
   region: RegionId;
   seismicity: Seismicity;
+  frost_depth: FrostDepth;
 }
 
 /** Черновик формы: всё пусто до выбора пользователем. Регион выводится из климата. */

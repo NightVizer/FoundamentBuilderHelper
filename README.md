@@ -40,19 +40,17 @@ npm run dev
 
 ### Контракт JEV (POST `JEV_API_URL`)
 
-Тело запроса — JSON полей формы (`FoundationInput`). Ответ:
+Один вызов OpenRouter Decisions API (`typesafe/jev-1.13`), 4 вопроса Noul, по одному на тип
+(`backend/app/services/jev_client.py`):
 
-```json
-{
-  "suitability": {
-    "strip": 72,
-    "slab": 68,
-    "pile": 81,
-    "column": 55
-  },
-  "notes": { "pile": ["краткий комментарий модели"] }
-}
-```
+- `state` — входы формы на английском, числа переведены в категории (этажность — диапазоном, промерзание —
+  диапазоном формы). Площадь в `state` не идёт: на выбор типа она не влияет, только на смету.
+- `questions.<type>.instructions.assessments` — оценки из `backend/app/data/jev_rules.json` (выжимка справочника
+  по типам фундаментов) только для фактических значений входа: поле, сила влияния, вердикт
+  (`favourable` … `excluded`), причина.
+- Ответ: `{"answers": {"pile": {"type": "noul", "noul": 0.91}, ...}}`, noul × 100 = процент.
+
+Без `frost_depth` во входе оценка по промерзанию не передаётся.
 
 ## API
 

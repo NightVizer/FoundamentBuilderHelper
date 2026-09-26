@@ -120,6 +120,7 @@ function toInput(d: FormDraft): { input: FoundationInput; site: SiteConditions }
       wall_material: d.wall_material,
       region: CLIMATE_REGION[d.climate],
       seismicity: d.seismicity,
+      frost_depth: d.frost_depth,
     },
     site: { climate: d.climate, frost_depth: d.frost_depth },
   };

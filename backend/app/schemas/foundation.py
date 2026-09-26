@@ -26,6 +26,15 @@ class GroundwaterLevel(str, Enum):
     HIGH = "high"
 
 
+class FrostDepth(str, Enum):
+    """Глубина сезонного промерзания, диапазоны как на форме фронта."""
+
+    SHALLOW = "shallow"  # до 0,8 м
+    MODERATE = "moderate"  # 0,8-1,5 м
+    DEEP = "deep"  # 1,5-2,0 м
+    VERY_DEEP = "very_deep"  # более 2,0 м
+
+
 class WallMaterial(str, Enum):
     WOOD = "wood"
     AERATED_CONCRETE = "aerated_concrete"
@@ -47,6 +56,9 @@ class FoundationInput(BaseModel):
     region: str = Field(description="Код региона из GET /api/foundation/options")
     seismicity: Seismicity = Field(
         description="Сейсмичность, баллы: число 0–12 или категория '0-6', '7', '8+'"
+    )
+    frost_depth: FrostDepth | None = Field(
+        default=None, description="Глубина промерзания; без неё Jev судит только по описанию климата"
     )
 
     @field_validator("region")

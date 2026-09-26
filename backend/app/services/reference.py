@@ -57,6 +57,13 @@ SEISMICITY_LABELS: dict[str, str] = {
     "8+": "8 баллов и более",
 }
 
+FROST_LABELS: dict[str, str] = {
+    "shallow": "до 0,8 м",
+    "moderate": "0,8–1,5 м",
+    "deep": "1,5–2,0 м",
+    "very_deep": "более 2,0 м",
+}
+
 PRELIMINARY_WARNING = "Предварительное решение. Требуется проверка проектировщиком."
 
 # Коды регионов из ТЗ §3 → коды prices.json. Принимаются оба варианта.
@@ -67,29 +74,30 @@ REGION_ALIASES: dict[str, str] = {
 
 # Климат региона: качественные категории (без норм и цифр), общие для Jev и LLM.
 # en — в state для Jev (английский для неё основной), ru — в промпт LLM.
+# В en нет промерзания: глубину Jev получает отдельным полем, иначе описания могут противоречить.
 REGION_CLIMATE: dict[str, dict[str, str]] = {
     "moscow": {
-        "en": "Moscow region, Russia: temperate continental climate, cold winters, moderate seasonal soil freezing",
+        "en": "Moscow region, Russia: temperate continental climate, cold winters",
         "ru": "умеренно-континентальный климат, холодная зима, умеренное сезонное промерзание грунта",
     },
     "spb": {
-        "en": "Saint Petersburg, Russia: humid temperate climate, mild but long winters, moderate seasonal soil freezing, waterlogged soils are common",
+        "en": "Saint Petersburg, Russia: humid temperate climate, mild but long winters, waterlogged soils are common",
         "ru": "влажный умеренный климат, долгая мягкая зима, умеренное сезонное промерзание грунта",
     },
     "ekb": {
-        "en": "Sverdlovsk Oblast (Yekaterinburg), Russia: continental climate, long cold winters, deep seasonal soil freezing",
+        "en": "Sverdlovsk Oblast (Yekaterinburg), Russia: continental climate, long cold winters",
         "ru": "континентальный климат, долгая холодная зима, глубокое сезонное промерзание грунта",
     },
     "novosibirsk": {
-        "en": "Novosibirsk, Russia: sharply continental climate, very cold long winters, deep seasonal soil freezing",
+        "en": "Novosibirsk, Russia: sharply continental climate, very cold long winters",
         "ru": "резко континентальный климат, очень холодная долгая зима, глубокое сезонное промерзание грунта",
     },
     "krasnoyarsk": {
-        "en": "Krasnoyarsk Krai, Russia: sharply continental climate, very cold long winters, deep seasonal soil freezing",
+        "en": "Krasnoyarsk Krai, Russia: sharply continental climate, very cold long winters",
         "ru": "резко континентальный климат, очень холодная долгая зима, глубокое сезонное промерзание грунта",
     },
     "krasnodar": {
-        "en": "Krasnodar, southern Russia: mild climate, short warm winters, shallow seasonal soil freezing",
+        "en": "Krasnodar, southern Russia: mild climate, short warm winters",
         "ru": "мягкий климат, короткая тёплая зима, неглубокое сезонное промерзание грунта",
     },
 }
@@ -103,6 +111,11 @@ def _load(name: str) -> dict[str, Any]:
 @lru_cache
 def load_rules() -> dict[str, Any]:
     return _load("rules.json")
+
+
+@lru_cache
+def load_jev_rules() -> dict[str, Any]:
+    return _load("jev_rules.json")
 
 
 @lru_cache

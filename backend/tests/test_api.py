@@ -188,13 +188,79 @@ def test_jev_request_and_percentages(monkeypatch):
     for q in questions.values():
         assert q["type"] == "noul"
         assert set(q["criteria"]) == {"true", "false"}
-    assert "deep seasonal soil freezing" in sent["body"]["state"]["conditions"]["region_and_climate"]
+    assert "sharply continental" in sent["body"]["state"]["conditions"]["region_and_climate"]
 
     # noul 0-1 × 100 → проценты, сортировка по убыванию
     assert body["score_source"] == "jev"
     assert body["scores"] == {"pile": 73, "slab": 50, "strip": 41, "column": 40}
     assert body["recommended"]["type"] == "pile"
     assert [o["type"] for o in body["alternatives"]] == ["slab", "strip", "column"]
+
+
+def test_jev_questions_carry_assessments_for_actual_input(monkeypatch):
+    sent = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent["body"] = json.loads(request.content)
+        return httpx.Response(200, json=jev_answers({"strip": 0.3, "slab": 0.6, "pile": 0.8, "column": 0.1}))
+
+    use_jev(monkeypatch, handler)
+    assert recommend(frost_depth="very_deep").status_code == 200
+
+    state = sent["body"]["state"]
+    assert state["site"]["soil_freezing_depth"] == "very deep (more than 2.0 m)"
+    assert state["building"]["storeys"] == "3 storeys (band: 3 to 5 storeys)"
+    assert "footprint_area" not in state["building"]
+
+    def verdicts(ftype):
+        items = sent["body"]["questions"][ftype]["instructions"]["assessments"]
+        return {a["field"]: a["verdict"] for a in items}
+
+    # По одной оценке на поле входа: 7 факторов с промерзанием
+    assert len(verdicts("pile")) == 7
+    assert verdicts("column")["building.storeys"] == "excluded"
+    assert verdicts("pile")["site.soil_freezing_depth"] == "favourable"
+    assert verdicts("strip")["site.groundwater_level"] == "unfavourable"
+    influences = [a["influence"] for a in sent["body"]["questions"]["column"]["instructions"]["assessments"]]
+    assert influences == sorted(influences, key=["very strong", "strong", "moderate"].index)
+
+
+def test_jev_without_frost_depth_omits_it(monkeypatch):
+    sent = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent["body"] = json.loads(request.content)
+        return httpx.Response(200, json=jev_answers({"strip": 0.3, "slab": 0.6, "pile": 0.8, "column": 0.1}))
+
+    use_jev(monkeypatch, handler)
+    assert recommend().status_code == 200
+    assert "soil_freezing_depth" not in sent["body"]["state"]["site"]
+    fields = {a["field"] for a in sent["body"]["questions"]["slab"]["instructions"]["assessments"]}
+    assert "site.soil_freezing_depth" not in fields and len(fields) == 6
+
+
+def test_jev_rules_cover_every_input_value():
+    from app.schemas.foundation import BearingCapacity, FrostDepth, GroundwaterLevel, SoilType, WallMaterial
+    from app.services.reference import load_jev_rules
+
+    expected = {
+        "soil_type": {v.value for v in SoilType},
+        "bearing_capacity": {v.value for v in BearingCapacity},
+        "groundwater_level": {v.value for v in GroundwaterLevel},
+        "frost_depth": {v.value for v in FrostDepth},
+        "storeys": {"1-2", "3-5", "6-10", "11-25", "26+"},
+        "wall_material": {v.value for v in WallMaterial},
+        "seismicity": {"0-6", "7", "8+"},
+    }
+    verdicts = {"favourable", "acceptable", "neutral", "unfavourable", "excluded"}
+    rules = load_jev_rules()
+    for ftype in ("strip", "slab", "pile", "column"):
+        assert set(rules[ftype]) == set(expected)
+        for factor, values in expected.items():
+            assert rules[ftype][factor]["influence"] in {"very strong", "strong", "moderate"}
+            assert set(rules[ftype][factor]["values"]) == values, (ftype, factor)
+            for verdict, reason in rules[ftype][factor]["values"].values():
+                assert verdict in verdicts and reason
 
 
 def test_jev_error_is_502_not_rules(monkeypatch):
