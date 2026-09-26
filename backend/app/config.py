@@ -1,5 +1,11 @@
 import os
 from functools import lru_cache
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# backend/.env (переменные окружения процесса имеют приоритет)
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 @lru_cache

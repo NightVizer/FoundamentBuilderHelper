@@ -1,34 +1,116 @@
 {
+  "_comment": "Демонстрационная логика MVP, не нормативный расчёт. score = base_score + сумма баллов по факторам, ограничено 0..100. Положительные баллы попадают в reasons, отрицательные — в limitations.",
   "foundation_types": ["strip", "slab", "pile", "column"],
   "base_scores": {
-    "strip": 70,
-    "slab": 65,
-    "pile": 60,
-    "column": 55
+    "strip": 45,
+    "slab": 30,
+    "pile": 20,
+    "column": 45
   },
-  "modifiers": {
+  "factors": {
     "bearing_capacity": {
-      "low": { "strip": -15, "slab": -10, "pile": 20, "column": 15 },
-      "medium": { "strip": 0, "slab": 0, "pile": 5, "column": 0 },
-      "high": { "strip": 10, "slab": 15, "pile": -5, "column": -10 }
+      "low": {
+        "reason": "Низкая несущая способность грунта",
+        "points": { "strip": -15, "slab": 15, "pile": 25, "column": -15 }
+      },
+      "medium": {
+        "reason": "Средняя несущая способность грунта",
+        "points": { "strip": 5, "slab": 8, "pile": 12, "column": 0 }
+      },
+      "high": {
+        "reason": "Высокая несущая способность грунта",
+        "points": { "strip": 15, "slab": 5, "pile": -5, "column": 12 }
+      }
     },
     "groundwater_level": {
-      "high": { "strip": -10, "slab": -15, "pile": 15, "column": 10 },
-      "medium": { "strip": -5, "slab": -5, "pile": 5, "column": 5 },
-      "low": { "strip": 5, "slab": 5, "pile": 0, "column": 0 }
+      "low": {
+        "reason": "Низкий уровень грунтовых вод",
+        "points": { "strip": 8, "slab": 5, "pile": 0, "column": 5 }
+      },
+      "medium": {
+        "reason": "Средний уровень грунтовых вод",
+        "points": { "strip": -3, "slab": 3, "pile": 8, "column": 0 }
+      },
+      "high": {
+        "reason": "Высокий уровень грунтовых вод",
+        "points": { "strip": -12, "slab": 3, "pile": 15, "column": -10 }
+      }
     },
-    "floors_threshold": {
-      "3": { "strip": 5, "slab": 10, "pile": 0, "column": -5 },
-      "4": { "strip": -5, "slab": 15, "pile": 10, "column": -10 }
+    "floors": {
+      "1": {
+        "reason": "Небольшая нагрузка от одноэтажного здания",
+        "points": { "strip": 5, "slab": 0, "pile": -5, "column": 15 }
+      },
+      "2": {
+        "reason": "Умеренная нагрузка от двухэтажного здания",
+        "points": { "strip": 8, "slab": 5, "pile": 0, "column": 5 }
+      },
+      "3": {
+        "reason": "Значительная нагрузка от здания (3 этажа)",
+        "points": { "strip": 5, "slab": 10, "pile": 15, "column": -10 }
+      },
+      "4": {
+        "reason": "Значительная нагрузка от здания (4 этажа)",
+        "points": { "strip": -5, "slab": 12, "pile": 18, "column": -20 }
+      },
+      "5+": {
+        "reason": "Высокая нагрузка от здания (5 и более этажей)",
+        "points": { "strip": -12, "slab": 10, "pile": 20, "column": -30 }
+      }
     },
-    "seismicity_high": {
-      "types": { "strip": -10, "slab": 15, "pile": 5, "column": -15 }
+    "wall_material": {
+      "wood": {
+        "reason": "Лёгкие деревянные стены",
+        "points": { "strip": 3, "slab": 0, "pile": -5, "column": 15 }
+      },
+      "aerated_concrete": {
+        "reason": "Газобетонные стены чувствительны к неравномерным осадкам",
+        "points": { "strip": 5, "slab": 8, "pile": 0, "column": -3 }
+      },
+      "brick": {
+        "reason": "Тяжёлые кирпичные стены",
+        "points": { "strip": 8, "slab": 8, "pile": 10, "column": -12 }
+      },
+      "reinforced_concrete": {
+        "reason": "Тяжёлые железобетонные конструкции",
+        "points": { "strip": 3, "slab": 10, "pile": 10, "column": -15 }
+      }
+    },
+    "seismicity": {
+      "0-6": {
+        "reason": "Несейсмичный район (до 6 баллов)",
+        "points": { "strip": 5, "slab": 0, "pile": 0, "column": 3 }
+      },
+      "7": {
+        "reason": "Сейсмичность 7 баллов",
+        "points": { "strip": -5, "slab": 12, "pile": 8, "column": -10 }
+      },
+      "8+": {
+        "reason": "Высокая сейсмичность (8 баллов и более)",
+        "points": { "strip": -15, "slab": 15, "pile": 10, "column": -20 }
+      }
+    },
+    "soil_type": {
+      "sand": {
+        "reason": "Песчаный грунт: малая пучинистость, хорошо дренирует",
+        "points": { "strip": 8, "slab": 5, "pile": 5, "column": 5 }
+      },
+      "sandy_loam": {
+        "reason": "Супесь: умеренные свойства основания",
+        "points": { "strip": 6, "slab": 5, "pile": 5, "column": 5 }
+      },
+      "loam": {
+        "reason": "Суглинок: возможна сезонная пучинистость",
+        "points": { "strip": 3, "slab": 3, "pile": 5, "column": 2 }
+      },
+      "clay": {
+        "reason": "Глинистый грунт: пучинистость и осадки",
+        "points": { "strip": -5, "slab": 0, "pile": 8, "column": -5 }
+      },
+      "fill": {
+        "reason": "Насыпной грунт: неоднородное, слабое основание",
+        "points": { "strip": -15, "slab": 8, "pile": 10, "column": -15 }
+      }
     }
-  },
-  "reason_templates": {
-    "strip": ["Подходит для умеренных нагрузок", "Традиционное решение для малоэтажного строительства"],
-    "slab": ["Равномерное распределение нагрузки", "Эффективно на слабых грунтах при большой площади"],
-    "pile": ["Передача нагрузки на глубокие слои", "Рекомендуется при низкой несущей способности"],
-    "column": ["Экономично на сильных грунтах", "Минимальный объём земляных работ"]
   }
 }

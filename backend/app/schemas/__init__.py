@@ -1,9 +1,11 @@
 from app.schemas.foundation import (
     AnalyzeRequest,
     CompareAnalysisResponse,
+    CostBreakdown,
     FoundationInput,
     FoundationOption,
     FoundationRecommendResponse,
+    InputOptionsResponse,
     ReportRequest,
     ReportResponse,
     TypeInsight,
@@ -12,9 +14,11 @@ from app.schemas.foundation import (
 __all__ = [
     "AnalyzeRequest",
     "CompareAnalysisResponse",
+    "CostBreakdown",
     "FoundationInput",
     "FoundationOption",
     "FoundationRecommendResponse",
+    "InputOptionsResponse",
     "ReportRequest",
     "ReportResponse",
     "TypeInsight",

@@ -1,21 +1,81 @@
 {
+  "_comment": "Ориентировочные цены MVP (руб.), не смета. coefficient — региональный коэффициент (логистика, климат, зимнее бетонирование).",
   "regions": {
-    "moscow": { "name": "Москва и МО", "coefficient": 1.25 },
-    "spb": { "name": "Санкт-Петербург", "coefficient": 1.15 },
-    "ekb": { "name": "Екатеринбург", "coefficient": 1.0 },
-    "novosibirsk": { "name": "Новосибирск", "coefficient": 0.95 },
-    "krasnodar": { "name": "Краснодар", "coefficient": 1.05 }
+    "krasnoyarsk": {
+      "name": "Красноярский край",
+      "coefficient": 1.1,
+      "concrete_m3": 8500,
+      "rebar_ton": 78000,
+      "excavation_m3": 650,
+      "installation_m3": 4200
+    },
+    "moscow": {
+      "name": "Москва и МО",
+      "coefficient": 1.05,
+      "concrete_m3": 9800,
+      "rebar_ton": 82000,
+      "excavation_m3": 950,
+      "installation_m3": 5600
+    },
+    "spb": {
+      "name": "Санкт-Петербург",
+      "coefficient": 1.05,
+      "concrete_m3": 9400,
+      "rebar_ton": 80000,
+      "excavation_m3": 850,
+      "installation_m3": 5200
+    },
+    "ekb": {
+      "name": "Екатеринбург",
+      "coefficient": 1.0,
+      "concrete_m3": 8200,
+      "rebar_ton": 76000,
+      "excavation_m3": 700,
+      "installation_m3": 4300
+    },
+    "novosibirsk": {
+      "name": "Новосибирск",
+      "coefficient": 1.05,
+      "concrete_m3": 8300,
+      "rebar_ton": 77000,
+      "excavation_m3": 680,
+      "installation_m3": 4100
+    },
+    "krasnodar": {
+      "name": "Краснодар",
+      "coefficient": 1.0,
+      "concrete_m3": 8000,
+      "rebar_ton": 79000,
+      "excavation_m3": 600,
+      "installation_m3": 4000
+    }
   },
-  "unit_rates_rub_per_m2": {
-    "strip": { "concrete": 8500, "rebar": 3200, "earthworks": 2100, "install": 4500 },
-    "slab": { "concrete": 12000, "rebar": 4800, "earthworks": 1800, "install": 5200 },
-    "pile": { "concrete": 9500, "rebar": 4100, "earthworks": 3500, "install": 7800 },
-    "column": { "concrete": 6200, "rebar": 2800, "earthworks": 1200, "install": 3800 }
+  "quantities": {
+    "_comment": "На 1 м² пятна застройки для 1-этажного здания со стенами из газобетона. installation_factor — удорожание монтажа (для свай — погружение).",
+    "strip":  { "concrete_m3_per_m2": 0.30, "rebar_t_per_m3": 0.08, "excavation_m3_per_m2": 0.90, "installation_factor": 1.0 },
+    "slab":   { "concrete_m3_per_m2": 0.35, "rebar_t_per_m3": 0.10, "excavation_m3_per_m2": 0.60, "installation_factor": 1.0 },
+    "pile":   { "concrete_m3_per_m2": 0.28, "rebar_t_per_m3": 0.07, "excavation_m3_per_m2": 0.10, "installation_factor": 2.0 },
+    "column": { "concrete_m3_per_m2": 0.12, "rebar_t_per_m3": 0.06, "excavation_m3_per_m2": 0.35, "installation_factor": 1.2 }
   },
-  "labor_hours_per_m2": {
-    "strip": 2.5,
-    "slab": 3.2,
-    "pile": 4.0,
-    "column": 1.8
+  "load": {
+    "per_extra_floor": 0.12,
+    "wall_material": {
+      "wood": 0.7,
+      "aerated_concrete": 0.85,
+      "brick": 1.0,
+      "reinforced_concrete": 1.15
+    }
+  },
+  "adjustments": {
+    "high_groundwater_excavation": 1.3,
+    "fill_soil_excavation": 1.2,
+    "seismic_rebar": { "0-6": 1.0, "7": 1.15, "8+": 1.3 }
+  },
+  "labor": {
+    "_comment": "Нормы трудозатрат, чел.-ч. complexity умножает работы с бетоном (для свай — погружение).",
+    "concrete_h_per_m3": 1.6,
+    "rebar_h_per_t": 20,
+    "excavation_h_per_m3": 0.2,
+    "complexity": { "strip": 1.0, "slab": 0.7, "pile": 1.8, "column": 1.3 }
   }
 }

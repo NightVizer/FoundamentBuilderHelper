@@ -19,18 +19,17 @@ def _template_analysis(
     data: FoundationInput, result: FoundationRecommendResponse
 ) -> CompareAnalysisResponse:
     all_opts = [result.recommended, *result.alternatives]
-    types: list[TypeInsight] = []
-    for opt in all_opts:
-        types.append(
-            TypeInsight(
-                type=opt.type,
-                pros=[f"Пригодность по модели JEV: {opt.score}%", *opt.reasons[:2]],
-                cons=["Упрощённый шаблон без LLM — задайте DEEPSEEK_API_KEY"],
-            )
+    types = [
+        TypeInsight(
+            type=opt.type,
+            pros=[f"Оценка: {opt.score}/100", *opt.reasons[:4]],
+            cons=opt.limitations[:4] or ["Существенных ограничений по введённым условиям нет"],
         )
+        for opt in all_opts
+    ]
     return CompareAnalysisResponse(
-        overview="Сравнение сформировано шаблоном (DeepSeek не подключён).",
-        why_recommended=f"Наибольший процент пригодности у {_TYPE_RU[result.recommended.type]} фундамента ({result.recommended.score}%).",
+        overview="Сравнение сформировано по правилам rule engine (LLM не подключён).",
+        why_recommended=f"Наибольшую оценку получил {_TYPE_RU[result.recommended.type]} фундамент ({result.recommended.score}/100).",
         types=types,
         provider="template",
     )
@@ -39,10 +38,10 @@ def _template_analysis(
 def build_compare_analysis(
     data: FoundationInput, result: FoundationRecommendResponse
 ) -> CompareAnalysisResponse:
-    """Шаг 2: плюсы/минусы по уже рассчитанным процентам JEV (scores не меняются)."""
+    """Плюсы/минусы по уже рассчитанным оценкам (scores не меняются)."""
     all_opts = [result.recommended, *result.alternatives]
     options_block = "\n".join(
-        f"- {o.type}: suitability={o.score}%, cost_rub={o.estimated_cost_rub}, labor_h={o.labor_hours}"
+        f"- {o.type}: suitability={o.score}/100, cost_rub={o.estimated_cost_rub}, labor_h={o.labor_hours}"
         for o in all_opts
     )
     input_block = data.model_dump_json()
@@ -55,7 +54,7 @@ def build_compare_analysis(
     user = f"""Исходные данные (JSON):
 {input_block}
 
-Результаты модели JEV (процент пригодности 0-100 и смета):
+Результаты расчёта (оценка пригодности 0-100, стоимость, трудозатраты):
 {options_block}
 
 Верни JSON строго такой структуры:
@@ -99,8 +98,8 @@ def build_compare_analysis(
             ordered.append(
                 TypeInsight(
                     type=opt.type,
-                    pros=[f"Пригодность JEV: {opt.score}%"],
-                    cons=["DeepSeek не вернул описание для этого типа"],
+                    pros=[f"Оценка: {opt.score}/100", *opt.reasons[:3]],
+                    cons=opt.limitations[:3],
                 )
             )
 
