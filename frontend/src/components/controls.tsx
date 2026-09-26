@@ -1,7 +1,29 @@
 import { useId, type ReactNode } from "react";
 import type { Option } from "../options";
 
-interface ChoiceGroupProps<T extends string> {
+/** Общие свойства полей формы: якорь для прокрутки и текст ошибки. */
+interface FieldProps {
+  /** id обёртки поля: к нему прокручивает список ошибок. */
+  id: string;
+  error?: string;
+  /** Номер попытки отправки: при новой попытке ошибка вспыхивает снова. */
+  flash?: number;
+}
+
+/** Вспышка вокруг поля и текст ошибки под ним. key перезапускает анимацию. */
+function FieldError({ id, error, flash = 0, className = "" }: { id: string; error?: string; flash?: number; className?: string }) {
+  if (!error) return null;
+  return (
+    <>
+      <span key={`ring-${flash}-${error}`} className="flash-ring" aria-hidden />
+      <p key={`msg-${flash}-${error}`} id={id} className={`field-error ${className}`}>
+        {error}
+      </p>
+    </>
+  );
+}
+
+interface ChoiceGroupProps<T extends string> extends FieldProps {
   label: string;
   name: string;
   options: Option<T>[];
@@ -16,6 +38,9 @@ interface ChoiceGroupProps<T extends string> {
 
 /** Выбор одного значения: семантически радиогруппа, визуально кнопки-чипы. */
 export function ChoiceGroup<T extends string>({
+  id,
+  error,
+  flash,
   label,
   name,
   options,
@@ -26,11 +51,15 @@ export function ChoiceGroup<T extends string>({
   inline,
 }: ChoiceGroupProps<T>) {
   const labelId = useId();
+  const errorId = `${id}-error`;
   return (
     <div
+      id={id}
       role="radiogroup"
       aria-labelledby={labelId}
-      className={inline ? "grid items-center gap-x-6 gap-y-2.5 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : undefined}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? errorId : undefined}
+      className={`field ${error ? "is-invalid" : ""} ${inline ? "grid items-center gap-x-6 gap-y-2.5 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : ""}`}
     >
       <div id={labelId} className={inline ? "field-label mb-0" : "field-label"}>
         {label}
@@ -54,6 +83,7 @@ export function ChoiceGroup<T extends string>({
           </label>
         ))}
       </div>
+      <FieldError id={errorId} error={error} flash={flash} className={inline ? "sm:col-span-2" : ""} />
     </div>
   );
 }
@@ -64,7 +94,7 @@ const CARD_COLUMNS = {
   5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
 } as const;
 
-interface CardGroupProps<T extends string> {
+interface CardGroupProps<T extends string> extends FieldProps {
   label: string;
   name: string;
   options: Option<T>[];
@@ -78,6 +108,9 @@ interface CardGroupProps<T extends string> {
 
 /** Радиогруппа из карточек с миниатюрой: для вариантов, которые проще узнать по картинке. */
 export function CardGroup<T extends string>({
+  id,
+  error,
+  flash,
   label,
   name,
   options,
@@ -88,8 +121,16 @@ export function CardGroup<T extends string>({
   columns,
 }: CardGroupProps<T>) {
   const labelId = useId();
+  const errorId = `${id}-error`;
   return (
-    <div role="radiogroup" aria-labelledby={labelId}>
+    <div
+      id={id}
+      role="radiogroup"
+      aria-labelledby={labelId}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error ? errorId : undefined}
+      className={`field ${error ? "is-invalid" : ""}`}
+    >
       <div id={labelId} className="field-label">
         {label}
       </div>
@@ -114,11 +155,12 @@ export function CardGroup<T extends string>({
           </label>
         ))}
       </div>
+      <FieldError id={errorId} error={error} flash={flash} />
     </div>
   );
 }
 
-interface CountFieldProps {
+interface CountFieldProps extends FieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -128,16 +170,16 @@ interface CountFieldProps {
 }
 
 /** Целое число с кнопками − и +, поле можно заполнить и вручную. */
-export function CountField({ label, value, onChange, hint, min, max }: CountFieldProps) {
-  const id = useId();
+export function CountField({ id, error, flash, label, value, onChange, hint, min, max }: CountFieldProps) {
+  const inputId = useId();
   const n = Number.parseInt(value, 10);
   const step = (delta: number) => {
     const next = Number.isNaN(n) ? min : Math.min(max, Math.max(min, n + delta));
     onChange(String(next));
   };
   return (
-    <div>
-      <label htmlFor={id} className="field-label">
+    <div id={id} className={`field ${error ? "is-invalid" : ""}`}>
+      <label htmlFor={inputId} className="field-label">
         {label}
       </label>
       <div className="count-input">
@@ -147,16 +189,15 @@ export function CountField({ label, value, onChange, hint, min, max }: CountFiel
           </svg>
         </button>
         <input
-          id={id}
-          type="number"
+          id={inputId}
+          type="text"
           inputMode="numeric"
-          min={min}
-          max={max}
-          step={1}
+          autoComplete="off"
           value={value}
           placeholder="0"
           onChange={(e) => onChange(e.target.value)}
-          aria-describedby={`${id}-hint`}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : `${id}-hint`}
         />
         <button type="button" onClick={() => step(1)} disabled={!Number.isNaN(n) && n >= max} aria-label="Увеличить">
           <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" aria-hidden>
@@ -164,63 +205,71 @@ export function CountField({ label, value, onChange, hint, min, max }: CountFiel
           </svg>
         </button>
       </div>
-      <p id={`${id}-hint`} className="field-hint">
-        {hint}
-      </p>
+      {error ? (
+        <FieldError id={`${id}-error`} error={error} flash={flash} />
+      ) : (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
 
-interface NumberFieldProps {
+interface NumberFieldProps extends FieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
   suffix?: string;
   hint: string;
   integer?: boolean;
-  min: number;
-  max: number;
   placeholder?: string;
   disabled?: boolean;
 }
 
+// Поле текстовое, а не type="number": иначе браузер отдаёт пустую строку вместо
+// неверного ввода, и ошибку нельзя показать по делу.
 export function NumberField({
+  id,
+  error,
+  flash,
   label,
   value,
   onChange,
   suffix,
   hint,
   integer,
-  min,
-  max,
   placeholder,
   disabled,
 }: NumberFieldProps) {
-  const id = useId();
+  const inputId = useId();
   return (
-    <div>
-      <label htmlFor={id} className="field-label">
+    <div id={id} className={`field ${error ? "is-invalid" : ""}`}>
+      <label htmlFor={inputId} className="field-label">
         {label}
       </label>
       <div className="number-input">
         <input
-          id={id}
-          type="number"
+          id={inputId}
+          type="text"
           inputMode={integer ? "numeric" : "decimal"}
-          min={min}
-          max={max}
-          step={integer ? 1 : "any"}
+          autoComplete="off"
           value={value}
           placeholder={placeholder}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
-          aria-describedby={`${id}-hint`}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : `${id}-hint`}
         />
         {suffix && <span className="suffix">{suffix}</span>}
       </div>
-      <p id={`${id}-hint`} className="field-hint">
-        {hint}
-      </p>
+      {error ? (
+        <FieldError id={`${id}-error`} error={error} flash={flash} />
+      ) : (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

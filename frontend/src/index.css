@@ -321,6 +321,72 @@
     backdrop-filter: blur(10px);
   }
 
+  /* Ошибки ввода: поле с коралловой рамкой, вспышка вокруг и текст под полем */
+  .field {
+    @apply relative;
+  }
+  .flash-ring {
+    @apply pointer-events-none absolute -inset-2.5 z-[2];
+    border: 2px solid var(--coral);
+    background: rgba(255, 79, 85, 0.07);
+    opacity: 0;
+    animation: field-flash 1.2s ease-out;
+  }
+  .field-error {
+    @apply mt-2.5 flex items-start gap-2 text-sm font-medium leading-snug;
+    color: var(--coral-strong);
+    animation: error-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  .field-error::before {
+    content: "!";
+    @apply mt-px grid h-[1.125rem] w-[1.125rem] shrink-0 place-items-center rounded-full text-xs font-bold text-white;
+    background: var(--coral-strong);
+  }
+  .is-invalid .field-label {
+    color: var(--coral-strong);
+  }
+  .is-invalid .number-input,
+  .is-invalid .count-input {
+    border-color: var(--coral-strong);
+    background: #fff7f7;
+  }
+  .is-invalid .number-input .suffix,
+  .is-invalid .count-input button:not(:hover) {
+    background: #ffeeee;
+  }
+  .is-invalid .peer:not(:checked) + .opt-card:not(:hover),
+  .is-invalid .peer:not(:checked) + .choice:not(:hover) {
+    border-color: #f2a7aa;
+    --acc-soft: #ffecec;
+  }
+
+  .form-issues-title {
+    @apply text-[0.9375rem] font-semibold;
+    color: var(--coral-strong);
+  }
+  .form-issues-list {
+    @apply mt-2 flex flex-wrap gap-2 max-sm:-mx-1 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-1 max-sm:pb-1;
+  }
+  .issue-chip {
+    @apply inline-flex h-8 items-center whitespace-nowrap rounded-full border px-3.5 text-sm font-medium;
+    border-color: #f2a7aa;
+    background: #fff4f4;
+    color: var(--coral-strong);
+    animation: error-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+  .issue-chip:hover {
+    @apply text-white;
+    border-color: var(--coral-strong);
+    background: var(--coral-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px -10px rgba(224, 58, 66, 0.8);
+  }
+
   .btn-primary,
   .btn-secondary {
     transition:
@@ -594,6 +660,42 @@
   }
 }
 
+@keyframes field-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 0.25;
+  }
+  44% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes error-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+  70% {
+    transform: translateX(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -601,8 +703,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ring-arc {
+  .ring-arc,
+  .field-error,
+  .issue-chip {
     animation: none;
+  }
+  .flash-ring {
+    display: none;
   }
   .spinner {
     animation-duration: 2.4s;
@@ -615,6 +722,7 @@
   .opt-card:hover,
   .btn-primary:hover:not(:disabled),
   .btn-secondary:hover,
+  .issue-chip:hover,
   .winner:hover,
   .alt-card:hover,
   .winner:hover .picture-dot,

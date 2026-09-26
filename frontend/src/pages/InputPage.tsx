@@ -41,15 +41,57 @@ const EMPTY: FormDraft = {
 const FLOORS_MAX = 50;
 const AREA_MAX = 100_000;
 
-function parseFloors(raw: string): number | null {
-  if (!/^\d+$/.test(raw.trim())) return null;
-  const n = Number(raw);
-  return n >= 1 && n <= FLOORS_MAX ? n : null;
+type FieldKey = keyof FormDraft;
+
+// Порядок полей на странице: в нём же идут ошибки и прокрутка к первой из них.
+const FIELDS: { key: FieldKey; label: string; missing: string }[] = [
+  { key: "soil_type", label: "Тип грунта", missing: "Выберите тип грунта" },
+  { key: "bearing_capacity", label: "Несущая способность", missing: "Выберите несущую способность" },
+  { key: "groundwater_level", label: "Уровень грунтовых вод", missing: "Выберите уровень грунтовых вод" },
+  { key: "floors", label: "Этажность", missing: "Укажите этажность" },
+  { key: "building_area_m2", label: "Площадь здания", missing: "Укажите площадь здания" },
+  { key: "wall_material", label: "Материал стен", missing: "Выберите материал стен" },
+  { key: "climate", label: "Климат", missing: "Выберите климат" },
+  { key: "frost_depth", label: "Глубина промерзания", missing: "Выберите глубину промерзания" },
+  { key: "seismicity", label: "Сейсмичность", missing: "Выберите сейсмичность" },
+];
+
+const fieldId = (key: FieldKey) => `field-${key}`;
+
+function isEmpty(value: FormDraft[FieldKey]): boolean {
+  return value === null || (typeof value === "string" && value.trim() === "");
 }
 
-function parseArea(raw: string): number | null {
-  const n = Number(raw.replace(",", "."));
-  return raw.trim() !== "" && Number.isFinite(n) && n > 0 && n <= AREA_MAX ? n : null;
+/** Число этажей или текст ошибки. */
+function parseFloors(raw: string): number | string {
+  const v = raw.trim();
+  if (!/^\d+$/.test(v)) return "Введите целое число, без букв, дробей и знаков";
+  const n = Number(v);
+  if (n < 1 || n > FLOORS_MAX) return `Этажность должна быть от 1 до ${FLOORS_MAX}`;
+  return n;
+}
+
+/** Площадь или текст ошибки. Пробелы между разрядами и запятая допустимы: «12 500,5». */
+function parseArea(raw: string): number | string {
+  const v = raw.replace(/\s/g, "").replace(",", ".");
+  if (!/^-?(\d+(\.\d*)?|\.\d+)$/.test(v)) return "Введите число, например 120 или 85,5";
+  const n = Number(v);
+  if (n <= 0) return "Площадь должна быть больше нуля";
+  if (n > AREA_MAX) return "Площадь не может быть больше 100 000 м²";
+  return n;
+}
+
+/** Ошибки по полям: пустые поля и значения вне ограничений бэкенда. */
+function validate(d: FormDraft): Partial<Record<FieldKey, string>> {
+  const errors: Partial<Record<FieldKey, string>> = {};
+  for (const { key, missing } of FIELDS) {
+    if (isEmpty(d[key])) errors[key] = missing;
+  }
+  const floors = parseFloors(d.floors);
+  if (!errors.floors && typeof floors === "string") errors.floors = floors;
+  const area = parseArea(d.building_area_m2);
+  if (!errors.building_area_m2 && typeof area === "string") errors.building_area_m2 = area;
+  return errors;
 }
 
 function toInput(d: FormDraft): { input: FoundationInput; site: SiteConditions } | null {
@@ -59,8 +101,8 @@ function toInput(d: FormDraft): { input: FoundationInput; site: SiteConditions }
     !d.soil_type ||
     !d.bearing_capacity ||
     !d.groundwater_level ||
-    floors === null ||
-    area === null ||
+    typeof floors !== "number" ||
+    typeof area !== "number" ||
     !d.wall_material ||
     !d.climate ||
     !d.frost_depth ||
@@ -83,6 +125,16 @@ function toInput(d: FormDraft): { input: FoundationInput; site: SiteConditions }
   };
 }
 
+/** Прокрутка к полю и фокус на нём: на выбранном варианте, поле ввода или первом варианте. */
+function goToField(key: FieldKey) {
+  const el = document.getElementById(fieldId(key));
+  if (!el) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+  const target = el.querySelector<HTMLInputElement>("input:checked, input[type=text], input[type=radio]");
+  target?.focus({ preventScroll: true });
+}
+
 function BlockHead({ n, title, sub, id }: { n: number; title: string; sub: string; id: string }) {
   return (
     <header>
@@ -103,6 +155,10 @@ interface Props {
 export function InputPage({ onCalculated, onError }: Props) {
   const [draft, setDraft] = useState<FormDraft>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
+  // Число попыток отправки: после первой показываем и незаполненные поля,
+  // каждая следующая заново подсвечивает ошибки.
+  const [attempt, setAttempt] = useState(0);
+  const errors = validate(draft);
   const ready = toInput(draft);
 
   const set =
@@ -110,9 +166,22 @@ export function InputPage({ onCalculated, onError }: Props) {
     (value: FormDraft[K]) =>
       setDraft((d) => ({ ...d, [key]: value }));
 
+  // Неверное значение видно сразу при вводе, незаполненное поле только после попытки отправки.
+  const errorOf = (key: FieldKey): string | undefined => {
+    if (!errors[key]) return undefined;
+    return attempt > 0 || !isEmpty(draft[key]) ? errors[key] : undefined;
+  };
+  const field = (key: FieldKey) => ({ id: fieldId(key), error: errorOf(key), flash: attempt });
+
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!ready || submitting) return;
+    if (submitting) return;
+    if (!ready) {
+      setAttempt((n) => n + 1);
+      const first = FIELDS.find(({ key }) => errors[key]);
+      if (first) goToField(first.key);
+      return;
+    }
     setSubmitting(true);
     try {
       const result = await fetchRecommendation(ready.input);
@@ -122,18 +191,8 @@ export function InputPage({ onCalculated, onError }: Props) {
     }
   }
 
-  const fields = [
-    draft.soil_type,
-    draft.bearing_capacity,
-    draft.groundwater_level,
-    parseFloors(draft.floors),
-    parseArea(draft.building_area_m2),
-    draft.wall_material,
-    draft.climate,
-    draft.frost_depth,
-    draft.seismicity,
-  ];
-  const filled = fields.filter((v) => v !== null).length;
+  const problems = FIELDS.filter(({ key }) => errors[key]);
+  const filled = FIELDS.length - problems.length;
 
   return (
     <Shell>
@@ -149,6 +208,7 @@ export function InputPage({ onCalculated, onError }: Props) {
             <div className="mt-8 space-y-8">
               <CardGroup
                 label="Тип грунта"
+                {...field("soil_type")}
                 name="soil_type"
                 options={SOIL_OPTIONS}
                 value={draft.soil_type}
@@ -158,6 +218,7 @@ export function InputPage({ onCalculated, onError }: Props) {
               />
               <CardGroup
                 label="Несущая способность"
+                {...field("bearing_capacity")}
                 name="bearing_capacity"
                 options={BEARING_OPTIONS}
                 value={draft.bearing_capacity}
@@ -168,6 +229,7 @@ export function InputPage({ onCalculated, onError }: Props) {
               />
               <CardGroup
                 label="Уровень грунтовых вод"
+                {...field("groundwater_level")}
                 name="groundwater_level"
                 options={GROUNDWATER_OPTIONS}
                 value={draft.groundwater_level}
@@ -184,6 +246,7 @@ export function InputPage({ onCalculated, onError }: Props) {
             <div className="min-w-0 space-y-8">
               <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
                 <CountField
+                  {...field("floors")}
                   label="Этажность"
                   value={draft.floors}
                   onChange={set("floors")}
@@ -192,18 +255,18 @@ export function InputPage({ onCalculated, onError }: Props) {
                   hint={`Целое число от 1 до ${FLOORS_MAX}`}
                 />
                 <NumberField
+                  {...field("building_area_m2")}
                   label="Площадь здания"
                   value={draft.building_area_m2}
                   onChange={set("building_area_m2")}
                   suffix="м²"
-                  min={1}
-                  max={AREA_MAX}
                   placeholder="Введите площадь"
                   hint="Больше нуля, до 100 000"
                 />
               </div>
               <CardGroup
                 label="Материал стен"
+                {...field("wall_material")}
                 name="wall_material"
                 options={WALL_OPTIONS}
                 value={draft.wall_material}
@@ -219,6 +282,7 @@ export function InputPage({ onCalculated, onError }: Props) {
             <div className="mt-8 space-y-8">
               <CardGroup
                 label="Климат"
+                {...field("climate")}
                 name="climate"
                 options={CLIMATE_OPTIONS}
                 value={draft.climate}
@@ -229,6 +293,7 @@ export function InputPage({ onCalculated, onError }: Props) {
               />
               <CardGroup
                 label="Глубина промерзания"
+                {...field("frost_depth")}
                 name="frost_depth"
                 options={FROST_OPTIONS}
                 value={draft.frost_depth}
@@ -239,6 +304,7 @@ export function InputPage({ onCalculated, onError }: Props) {
               />
               <ChoiceGroup
                 label="Сейсмичность"
+                {...field("seismicity")}
                 name="seismicity"
                 options={SEISMICITY_OPTIONS}
                 value={draft.seismicity}
@@ -250,12 +316,25 @@ export function InputPage({ onCalculated, onError }: Props) {
         </fieldset>
 
         <footer className="form-footer">
-          <p className="mono" aria-live="polite">
-            {ready
-              ? "Все поля заполнены"
-              : `Заполнено ${filled} из ${fields.length}. Кнопка станет активной, когда заполнены все поля`}
-          </p>
-          <button type="submit" className="btn-primary" disabled={!ready || submitting}>
+          <div className="min-w-[min(100%,18rem)] flex-1" role="status">
+            {attempt > 0 && problems.length > 0 ? (
+              <div key={attempt} className="form-issues">
+                <p className="form-issues-title">Для расчёта заполните или исправьте:</p>
+                <ul className="form-issues-list">
+                  {problems.map(({ key, label }) => (
+                    <li key={key}>
+                      <button type="button" className="issue-chip" onClick={() => goToField(key)}>
+                        {label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="mono">{ready ? "Все поля заполнены" : `Заполнено ${filled} из ${FIELDS.length}`}</p>
+            )}
+          </div>
+          <button type="submit" className="btn-primary max-sm:w-full" disabled={submitting}>
             {submitting && <Spinner className="h-5 w-5" />}
             {submitting ? "Рассчитываем" : "Рассчитать"}
           </button>
