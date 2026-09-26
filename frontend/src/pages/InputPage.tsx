@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { Calculation } from "../App";
 import { fetchRecommendation } from "../api/foundation";
-import { CardGroup, ChoiceGroup, CountField, NumberField, Spinner } from "../components/controls";
+import { CardGroup, ChoiceGroup, CountField, NumberField, PileLoader } from "../components/controls";
 import {
   BearingIcon,
   ClimateIcon,
@@ -11,7 +11,7 @@ import {
   WallIcon,
   WaterIcon,
 } from "../components/icons";
-import { Hero, Shell } from "../components/Shell";
+import { Hero, PileDriver, Shell } from "../components/Shell";
 import {
   BEARING_OPTIONS,
   CLIMATE_HINTS,
@@ -55,6 +55,13 @@ const FIELDS: { key: FieldKey; label: string; missing: string }[] = [
   { key: "frost_depth", label: "Глубина промерзания", missing: "Выберите глубину промерзания" },
   { key: "seismicity", label: "Сейсмичность", missing: "Выберите сейсмичность" },
 ];
+
+// Поля каждого раздела: раздел отмечается галочкой, когда все они заполнены верно.
+const SECTION_FIELDS: Record<"soil" | "building" | "site", FieldKey[]> = {
+  soil: ["soil_type", "bearing_capacity", "groundwater_level"],
+  building: ["floors", "building_area_m2", "wall_material"],
+  site: ["climate", "frost_depth", "seismicity"],
+};
 
 const fieldId = (key: FieldKey) => `field-${key}`;
 
@@ -136,12 +143,26 @@ function goToField(key: FieldKey) {
   target?.focus({ preventScroll: true });
 }
 
-function BlockHead({ n, title, sub, id }: { n: number; title: string; sub: string; id: string }) {
+function BlockHead({ n, title, sub, id, done }: { n: number; title: string; sub: string; id: string; done: boolean }) {
   return (
     <header>
       <h2 id={id} className="block-title">
         <span className="block-num">{n}.</span>
         {title}
+        {done && (
+          <svg viewBox="0 0 20 20" className="block-done" aria-hidden>
+            <circle cx="10" cy="10" r="10" fill="var(--ink)" />
+            <path
+              d="M5.8 10.4 L8.6 13.1 L14.2 7.3"
+              pathLength={1}
+              fill="none"
+              stroke="#fff"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </h2>
       <p className="block-sub">{sub}</p>
     </header>
@@ -160,6 +181,11 @@ export function InputPage({ onCalculated, onError }: Props) {
   // каждая следующая заново подсвечивает ошибки.
   const [attempt, setAttempt] = useState(0);
   const errors = validate(draft);
+
+  // «Новый расчёт» открывает форму сверху, а не на прокрутке результатов.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const ready = toInput(draft);
 
   const set =
@@ -173,6 +199,7 @@ export function InputPage({ onCalculated, onError }: Props) {
     return attempt > 0 || !isEmpty(draft[key]) ? errors[key] : undefined;
   };
   const field = (key: FieldKey) => ({ id: fieldId(key), error: errorOf(key), flash: attempt });
+  const sectionDone = (section: keyof typeof SECTION_FIELDS) => SECTION_FIELDS[section].every((key) => !errors[key]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -197,7 +224,7 @@ export function InputPage({ onCalculated, onError }: Props) {
 
   return (
     <Shell>
-      <Hero ghost="Грунт" title="Помощник проектировщика фундамента">
+      <Hero ghost="Грунт" title="Помощник проектировщика фундамента" art={<PileDriver />}>
         Опишите грунт, здание и условия площадки. Покажем три типа фундамента, которые подходят лучше
         всего, с оценкой пригодности каждого.
       </Hero>
@@ -205,7 +232,13 @@ export function InputPage({ onCalculated, onError }: Props) {
       <form onSubmit={submit} className="content" noValidate>
         <fieldset disabled={submitting} className="min-w-0 disabled:opacity-60">
           <section className="form-block" aria-labelledby="h-soil">
-            <BlockHead n={1} id="h-soil" title="Грунт" sub="Укажите характеристики грунта на вашем участке" />
+            <BlockHead
+              n={1}
+              id="h-soil"
+              title="Грунт"
+              sub="Укажите характеристики грунта на вашем участке"
+              done={sectionDone("soil")}
+            />
             <div className="mt-8 space-y-8">
               <CardGroup
                 label="Тип грунта"
@@ -243,7 +276,7 @@ export function InputPage({ onCalculated, onError }: Props) {
           </section>
 
           <section className="form-block form-block-split" aria-labelledby="h-building">
-            <BlockHead n={2} id="h-building" title="Здание" sub="Параметры будущего здания" />
+            <BlockHead n={2} id="h-building" title="Здание" sub="Параметры будущего здания" done={sectionDone("building")} />
             <div className="min-w-0 space-y-8">
               <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
                 <CountField
@@ -279,7 +312,13 @@ export function InputPage({ onCalculated, onError }: Props) {
           </section>
 
           <section className="form-block" aria-labelledby="h-site">
-            <BlockHead n={3} id="h-site" title="Условия" sub="Климат площадки, промерзание грунта и сейсмичность" />
+            <BlockHead
+              n={3}
+              id="h-site"
+              title="Условия"
+              sub="Климат площадки, промерзание грунта и сейсмичность"
+              done={sectionDone("site")}
+            />
             <div className="mt-8 space-y-8">
               <CardGroup
                 label="Климат"
@@ -332,11 +371,23 @@ export function InputPage({ onCalculated, onError }: Props) {
                 </ul>
               </div>
             ) : (
-              <p className="mono">{ready ? "Все поля заполнены" : `Заполнено ${filled} из ${FIELDS.length}`}</p>
+              <div className="flex items-center gap-4">
+                {/* Шкала из свай: каждая заполненная графа забивает свою сваю */}
+                <div className={`fill-meter ${ready ? "is-full" : ""}`} aria-hidden>
+                  {FIELDS.map(({ key }, i) => (
+                    <span key={key} className={errors[key] ? undefined : "is-on"} style={{ ["--i" as string]: i }} />
+                  ))}
+                </div>
+                <p className="mono">{ready ? "Все поля заполнены" : `Заполнено ${filled} из ${FIELDS.length}`}</p>
+              </div>
             )}
           </div>
-          <button type="submit" className="btn-primary max-sm:w-full" disabled={submitting}>
-            {submitting && <Spinner className="h-5 w-5" />}
+          <button
+            type="submit"
+            className={`btn-primary btn-calc max-sm:w-full ${ready ? "is-ready" : ""}`}
+            disabled={submitting}
+          >
+            {submitting && <PileLoader className="h-5 w-6" />}
             {submitting ? "Рассчитываем" : "Рассчитать"}
           </button>
         </footer>

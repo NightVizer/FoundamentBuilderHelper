@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Calculation } from "../App";
 import { fetchExplanations, postEngineeringReport, rankOptions } from "../api/foundation";
-import { ScoreRing, Spinner } from "../components/controls";
+import { PileLoader, ScoreRing } from "../components/controls";
 import { FoundationIllustration } from "../components/icons";
 import { Hero, SectionHeading, Shell } from "../components/Shell";
+import { useInView } from "../motion";
 import {
   BEARING_OPTIONS,
   CLIMATE_OPTIONS,
@@ -44,10 +45,13 @@ function describeInput(input: FoundationInput, site: SiteConditions): string {
   );
 }
 
+/** Модель фундамента собирается по деталям, когда сцена показалась на экране. */
 function FoundationArt({ type, primary, className }: { type: FoundationType; primary?: boolean; className: string }) {
+  const [ref, built] = useInView<HTMLDivElement>();
   return (
     <div
-      className={`fnd-stage ${primary ? "fnd-stage-primary" : ""} ${className}`}
+      ref={ref}
+      className={`fnd-stage ${primary ? "fnd-stage-primary" : ""} ${built ? "is-built" : ""} ${className}`}
       role="img"
       aria-label={FOUNDATION_NAMES[type]}
     >
@@ -59,7 +63,7 @@ function FoundationArt({ type, primary, className }: { type: FoundationType; pri
 function Loading() {
   return (
     <div className="flex items-center justify-center gap-3 py-8 text-graphite" role="status">
-      <Spinner className="h-6 w-6 text-coral-strong" />
+      <PileLoader className="h-6 w-7 text-coral-strong" />
       <span>Готовим описание</span>
     </div>
   );
@@ -70,7 +74,11 @@ function ItemList({ items, sign, empty }: { items: string[]; sign: "plus" | "min
   return (
     <ul className="space-y-1">
       {items.map((item, i) => (
-        <li key={i} className={sign === "plus" ? "point point-plus" : "point point-minus"}>
+        <li
+          key={i}
+          className={sign === "plus" ? "point point-plus" : "point point-minus"}
+          style={{ ["--i" as string]: i }}
+        >
           {item}
         </li>
       ))}
@@ -115,6 +123,7 @@ function ReportPages() {
           <rect x="14" y="27" width="28" height="4" rx="2" fill="#d6d6dc" />
           <path d="M22 78 A26 26 0 0 1 74 78" fill="none" stroke="#ececf0" strokeWidth="9" />
           <path
+            className="teaser-gauge"
             d="M22 78 A26 26 0 0 1 74 78"
             fill="none"
             stroke="var(--coral-strong)"
@@ -136,8 +145,9 @@ function ReportPages() {
 
 /** Переход к инженерному отчёту: светлая панель с миниатюрой листов и статусом формирования. */
 function ReportTeaser({ status, onOpen }: { status: ReportStatus; onOpen: () => void }) {
+  const [ref, visible] = useInView<HTMLElement>();
   return (
-    <section className="report-teaser" aria-labelledby="report-teaser-title">
+    <section ref={ref} className={`report-teaser ${visible ? "is-visible" : ""}`} aria-labelledby="report-teaser-title">
       <ReportPages />
       <div className="report-teaser-body">
         <h2 id="report-teaser-title" className="report-teaser-title">
@@ -152,7 +162,7 @@ function ReportTeaser({ status, onOpen }: { status: ReportStatus; onOpen: () => 
             Открыть отчёт
           </button>
           <p className={`teaser-status teaser-status-${status}`} role="status">
-            {status === "loading" && <Spinner className="h-4 w-4 text-coral-strong" />}
+            {status === "loading" && <PileLoader className="h-4 w-5 text-coral-strong" />}
             {status !== "loading" && <span className="teaser-status-dot" aria-hidden />}
             {REPORT_STATUS_TEXT[status]}
           </p>
@@ -196,6 +206,11 @@ export function ResultsPage({ calc, onNewCalculation, onOpenReport, onError }: P
     };
   }, [input, result]);
 
+  // Страница открывается сверху, а не на прокрутке формы: иначе сборка лучшего варианта пройдёт за экраном.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [winner, ...alternatives] = top3;
   const winnerText = texts?.[winner.type];
 
@@ -219,7 +234,9 @@ export function ResultsPage({ calc, onNewCalculation, onOpenReport, onError }: P
                 <svg viewBox="0 0 20 20" className="h-5 w-5 shrink-0" aria-hidden>
                   <circle cx="10" cy="10" r="10" fill="#fff" />
                   <path
+                    className="badge-check"
                     d="M5.8 10.4 L8.6 13.1 L14.2 7.3"
+                    pathLength={1}
                     fill="none"
                     stroke="var(--coral-strong)"
                     strokeWidth="2.2"

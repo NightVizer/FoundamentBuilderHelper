@@ -1,4 +1,5 @@
-import { useId, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
+import { prefersReducedMotion, useCountUp, useInView } from "../motion";
 import type { Option } from "../options";
 
 /** Общие свойства полей формы: якорь для прокрутки и текст ошибки. */
@@ -169,13 +170,24 @@ interface CountFieldProps extends FieldProps {
   max: number;
 }
 
+/** Новое число въезжает снизу при увеличении и сверху при уменьшении, как на счётчике. */
+function roll(el: HTMLElement | null, delta: number) {
+  if (!el || prefersReducedMotion()) return;
+  el.animate([{ transform: `translateY(${delta > 0 ? 60 : -60}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], {
+    duration: 240,
+    easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+  });
+}
+
 /** Целое число с кнопками − и +, поле можно заполнить и вручную. */
 export function CountField({ id, error, flash, label, value, onChange, hint, min, max }: CountFieldProps) {
   const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const n = Number.parseInt(value, 10);
   const step = (delta: number) => {
     const next = Number.isNaN(n) ? min : Math.min(max, Math.max(min, n + delta));
     onChange(String(next));
+    if (next !== n) roll(inputRef.current, delta);
   };
   return (
     <div id={id} className={`field ${error ? "is-invalid" : ""}`}>
@@ -189,6 +201,7 @@ export function CountField({ id, error, flash, label, value, onChange, hint, min
           </svg>
         </button>
         <input
+          ref={inputRef}
           id={inputId}
           type="text"
           inputMode="numeric"
@@ -290,14 +303,34 @@ export function Spinner({ className = "h-5 w-5", label }: { className?: string; 
   );
 }
 
+/** Три сваи по очереди уходят в основание: ожидание в духе иллюстрации первого экрана. */
+export function PileLoader({ className = "h-5 w-6" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 20" className={`pile-loader ${className}`} fill="currentColor" aria-hidden>
+      {[3, 10.25, 17.5].map((x, i) => (
+        <rect key={x} x={x} y="2" width="3.5" height="11" style={{ ["--i" as string]: i }} />
+      ))}
+      <rect x="1" y="15" width="22" height="3.5" />
+    </svg>
+  );
+}
+
 const RING_R = 40;
 const RING_C = 2 * Math.PI * RING_R;
 
 /** Кольцо пригодности: одинаковый размер у победителя и альтернатив. */
 export function ScoreRing({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score));
+  // Дуга и число растут, когда кольцо показалось на экране, а не при загрузке страницы.
+  const [ref, visible] = useInView<HTMLDivElement>(0.6);
+  const shown = useCountUp(clamped, visible);
   return (
-    <div className="score-ring" role="img" aria-label={`Пригодность ${clamped}%`}>
+    <div
+      ref={ref}
+      className={`score-ring ${visible ? "is-visible" : ""}`}
+      role="img"
+      aria-label={`Пригодность ${clamped}%`}
+    >
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
         <circle cx="50" cy="50" r={RING_R} fill="none" stroke="var(--rule)" strokeWidth="6" />
         <circle
@@ -315,7 +348,7 @@ export function ScoreRing({ score }: { score: number }) {
         />
       </svg>
       <span className="score-value" aria-hidden>
-        {clamped}%
+        {shown}%
       </span>
     </div>
   );

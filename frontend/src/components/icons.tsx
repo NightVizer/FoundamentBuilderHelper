@@ -3,7 +3,8 @@ import type { Climate, FoundationType, FrostDepth, Level, Seismicity, SoilType, 
 
 // Миниатюры для карточек выбора. Основные линии рисуются currentColor (ink),
 // акцентные детали берут var(--acc) и var(--acc-soft): карточка перекрашивает их
-// в коралловый при наведении и выборе.
+// в коралловый при наведении и выборе. Классы ico-* двигают детали при наведении
+// на карточку по смыслу параметра (index.css, раздел «Движение»).
 
 const ACC = "var(--acc)";
 const ACC_SOFT = "var(--acc-soft)";
@@ -68,7 +69,9 @@ export function SoilIcon({ soil }: { soil: SoilType }) {
   return (
     <svg viewBox="0 0 40 40" className="h-10 w-10" aria-hidden>
       <rect x="1" y="1" width="38" height="38" rx="2" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
-      <SoilPattern soil={soil} />
+      <g className="ico-soil">
+        <SoilPattern soil={soil} />
+      </g>
     </svg>
   );
 }
@@ -78,29 +81,31 @@ export function SoilIcon({ soil }: { soil: SoilType }) {
 export function BearingIcon({ level }: { level: Level }) {
   return (
     <svg viewBox="0 0 48 40" className="h-10 w-12" aria-hidden>
-      <rect x="17" y="2" width="14" height="8" fill="currentColor" />
+      <rect className="ico-load" x="17" y="2" width="14" height="8" fill="currentColor" />
       <line x1="3" y1="11" x2="45" y2="11" stroke="currentColor" strokeWidth="1.5" />
-      {level === "low" && (
-        <g fill={ACC}>
-          {[18, 26, 34].flatMap((y, row) =>
-            (row % 2 ? [13, 25, 37] : [7, 19, 31, 43]).map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />),
-          )}
-        </g>
-      )}
-      {level === "medium" && (
-        <g stroke={ACC} strokeWidth="1.5" strokeDasharray="4 3">
-          {[18, 25, 32].map((y) => (
-            <line key={y} x1="4" y1={y} x2="44" y2={y} />
-          ))}
-        </g>
-      )}
-      {level === "high" && (
-        <g stroke={ACC} strokeWidth="1.5">
-          {[16, 21, 26, 31, 36].map((y) => (
-            <line key={y} x1="4" y1={y} x2="44" y2={y} />
-          ))}
-        </g>
-      )}
+      <g className="ico-strata">
+        {level === "low" && (
+          <g fill={ACC}>
+            {[18, 26, 34].flatMap((y, row) =>
+              (row % 2 ? [13, 25, 37] : [7, 19, 31, 43]).map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />),
+            )}
+          </g>
+        )}
+        {level === "medium" && (
+          <g stroke={ACC} strokeWidth="1.5" strokeDasharray="4 3">
+            {[18, 25, 32].map((y) => (
+              <line key={y} x1="4" y1={y} x2="44" y2={y} />
+            ))}
+          </g>
+        )}
+        {level === "high" && (
+          <g stroke={ACC} strokeWidth="1.5">
+            {[16, 21, 26, 31, 36].map((y) => (
+              <line key={y} x1="4" y1={y} x2="44" y2={y} />
+            ))}
+          </g>
+        )}
+      </g>
     </svg>
   );
 }
@@ -120,18 +125,23 @@ export function WaterIcon({ level }: { level: Level }) {
           (row % 2 ? [10, 22, 34] : [6, 18, 30, 42]).map((x) => <circle key={`${x}-${dy}`} cx={x} cy={dy} r="1.1" />),
         )}
       </g>
-      <path d={`${wave} L44 38 L4 38 Z`} fill={ACC_SOFT} />
-      <path d={wave} fill="none" stroke={ACC} strokeWidth="1.6" strokeLinecap="round" />
-      <polygon points={`36,${y - 8} 42,${y - 8} 39,${y - 3}`} fill="#fff" stroke={ACC} strokeWidth="1.3" strokeLinejoin="round" />
+      <g className="ico-water">
+        <path d={`${wave} L44 38 L4 38 Z`} fill={ACC_SOFT} />
+        <path d={wave} fill="none" stroke={ACC} strokeWidth="1.6" strokeLinecap="round" />
+        <polygon points={`36,${y - 8} 42,${y - 8} 39,${y - 3}`} fill="#fff" stroke={ACC} strokeWidth="1.3" strokeLinejoin="round" />
+      </g>
     </svg>
   );
 }
 
 /* Материал стен */
 
+/** Порядок укладки ряда при наведении: нижний ряд первым. */
+const rowOrder = (n: number) => ({ ["--r" as string]: n });
+
 function Block({ children }: { children?: ReactNode }) {
   return (
-    <g stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+    <g className="ico-row" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
       <polygon points="5,14 13,7 42,7 34,14" fill="#fff" />
       <polygon points="34,14 42,7 42,27 34,34" fill={ACC_SOFT} />
       <rect x="5" y="14" width="29" height="20" fill="#fff" />
@@ -144,8 +154,8 @@ export function WallIcon({ wall }: { wall: WallMaterial }) {
   return (
     <svg viewBox="0 0 48 40" className="h-10 w-12" aria-hidden>
       {wall === "wood" &&
-        [6, 16, 26].map((y) => (
-          <g key={y} stroke="currentColor" strokeWidth="1.4">
+        [6, 16, 26].map((y, row) => (
+          <g key={y} className="ico-row" style={rowOrder(2 - row)} stroke="currentColor" strokeWidth="1.4">
             <rect x="10" y={y} width="34" height="8" rx="4" fill="#fff" />
             <circle cx="10" cy={y + 4} r="4" fill={ACC_SOFT} />
             <circle cx="10" cy={y + 4} r="1.6" fill="none" stroke={ACC} />
@@ -167,22 +177,14 @@ export function WallIcon({ wall }: { wall: WallMaterial }) {
           </g>
         </Block>
       )}
-      {wall === "brick" && (
-        <g stroke="currentColor" strokeWidth="1.3">
-          {[4, 12, 20, 28].flatMap((y, row) =>
-            (row % 2 ? [[4, 7], [11, 14], [25, 14], [39, 5]] : [[4, 14], [18, 14], [32, 12]]).map(([x, w], i) => (
-              <rect
-                key={`${x}-${y}`}
-                x={x}
-                y={y}
-                width={w}
-                height="8"
-                fill={(row + i) % 3 === 1 ? ACC_SOFT : "#fff"}
-              />
-            )),
-          )}
-        </g>
-      )}
+      {wall === "brick" &&
+        [4, 12, 20, 28].map((y, row) => (
+          <g key={y} className="ico-row" style={rowOrder(3 - row)} stroke="currentColor" strokeWidth="1.3">
+            {(row % 2 ? [[4, 7], [11, 14], [25, 14], [39, 5]] : [[4, 14], [18, 14], [32, 12]]).map(([x, w], i) => (
+              <rect key={x} x={x} y={y} width={w} height="8" fill={(row + i) % 3 === 1 ? ACC_SOFT : "#fff"} />
+            ))}
+          </g>
+        ))}
       {wall === "reinforced_concrete" && (
         <Block>
           <g stroke={ACC} strokeWidth="1" strokeDasharray="2 2">
@@ -209,7 +211,16 @@ const SEISMIC_PATH: Record<Seismicity, string> = {
 export function SeismicIcon({ level }: { level: Seismicity }) {
   return (
     <svg viewBox="0 0 28 16" className="h-4 w-7 shrink-0" aria-hidden>
-      <path d={SEISMIC_PATH[level]} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+      <path
+        className="ico-seismic"
+        d={SEISMIC_PATH[level]}
+        pathLength={1}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -220,7 +231,7 @@ const MERCURY_Y: Record<Climate, number> = { mild: 8, humid: 12, temperate: 16, 
 
 function Flake({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   return (
-    <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+    <g className="ico-flake" stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
       {[0, 60, 120].map((a) => {
         const dx = r * Math.cos((a * Math.PI) / 180);
         const dy = r * Math.sin((a * Math.PI) / 180);
@@ -233,7 +244,7 @@ function Flake({ cx, cy, r }: { cx: number; cy: number; r: number }) {
 const CLIMATE_SIGN: Record<Climate, ReactNode> = {
   mild: (
     <g>
-      <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+      <g className="ico-rays" stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
         {range(0, 315, 45).map((a) => {
           const c = Math.cos((a * Math.PI) / 180);
           const s = Math.sin((a * Math.PI) / 180);
@@ -252,7 +263,7 @@ const CLIMATE_SIGN: Record<Climate, ReactNode> = {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-      <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+      <g className="ico-drops" stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
         {[30, 36, 42].map((x) => (
           <line key={x} x1={x} y1="28" x2={x - 1.5} y2="33" />
         ))}
@@ -283,7 +294,7 @@ export function ClimateIcon({ climate }: { climate: Climate }) {
         <rect x="8" y="3" width="8" height="26" rx="4" fill="#fff" />
         <circle cx="12" cy="32" r="5.5" fill="#fff" />
       </g>
-      <rect x="10.5" y={y} width="3" height={33 - y} rx="1.5" fill={ACC} />
+      <rect className="ico-mercury" x="10.5" y={y} width="3" height={33 - y} rx="1.5" fill={ACC} />
       <circle cx="12" cy="32" r="3.5" fill={ACC} />
       {CLIMATE_SIGN[climate]}
     </svg>
@@ -311,7 +322,7 @@ export function FrostIcon({ depth }: { depth: FrostDepth }) {
           (row % 2 ? [10, 22, 34] : [6, 18, 30, 42]).map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.1" />),
         )}
       </g>
-      <line x1="3" y1={y} x2="45" y2={y} stroke={ACC} strokeWidth="1.6" strokeDasharray="3 2.2" />
+      <line className="ico-frost-line" x1="3" y1={y} x2="45" y2={y} stroke={ACC} strokeWidth="1.6" strokeDasharray="3 2.2" />
       <line x1="3" y1="8" x2="45" y2="8" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
@@ -373,7 +384,7 @@ export function FoundationIllustration({ type, className = "" }: { type: Foundat
   return (
     <svg viewBox={viewBox} className={`iso ${className}`} aria-hidden>
       {boxes.map(({ f, acc }, i) => (
-        <g key={i} className={acc ? "iso-acc" : undefined}>
+        <g key={i} className={acc ? "iso-part iso-acc" : "iso-part"} style={{ ["--i" as string]: i }}>
           <polygon points={pts(f.left)} className="iso-l" />
           <polygon points={pts(f.right)} className="iso-r" />
           <polygon points={pts(f.top)} className="iso-t" />
