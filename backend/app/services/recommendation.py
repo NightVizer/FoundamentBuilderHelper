@@ -1,5 +1,8 @@
-"""Конвейер рекомендации: score → стоимость → трудозатраты → сортировка → причины."""
+"""Конвейер рекомендации: score (Jev) → стоимость → трудозатраты → сортировка → причины."""
 
+import logging
+
+from app.config import get_settings
 from app.schemas.foundation import (
     FoundationInput,
     FoundationOption,
@@ -9,6 +12,8 @@ from app.services.jev_client import fetch_jev_scores
 from app.services.pricing import estimate_cost, estimate_labor_hours, total_cost
 from app.services.reference import FOUNDATION_NAMES
 from app.services.scoring import score_all_types
+
+logger = logging.getLogger(__name__)
 
 
 def _condition_warnings(data: FoundationInput) -> list[str]:
@@ -27,9 +32,18 @@ def _condition_warnings(data: FoundationInput) -> list[str]:
 
 
 def recommend(data: FoundationInput) -> FoundationRecommendResponse:
-    """Данные уже проверены Pydantic-схемой FoundationInput."""
+    """Данные уже проверены Pydantic-схемой FoundationInput.
+
+    Проценты только от Jev (ТЗ §2); ошибка Jev пробрасывается (эндпоинт отдаёт 502).
+    Rule engine даёт проценты только при явном SCORE_SOURCE=rules (тесты, офлайн-разработка),
+    а в остальном — только тексты reasons/limitations для отчёта.
+    """
     scored = score_all_types(data)
-    jev_scores = fetch_jev_scores(data)
+    if get_settings().score_source == "rules":
+        logger.warning("SCORE_SOURCE=rules: проценты считает rule engine, а не Jev")
+        jev_scores = None
+    else:
+        jev_scores = fetch_jev_scores(data)
 
     options: list[FoundationOption] = []
     for ftype, result in scored.items():
@@ -51,6 +65,7 @@ def recommend(data: FoundationInput) -> FoundationRecommendResponse:
     options.sort(key=lambda o: (-o.score, o.estimated_cost_rub))
 
     return FoundationRecommendResponse(
+        scores={o.type: o.score for o in options},
         recommended=options[0],
         alternatives=options[1:],
         warnings=_condition_warnings(data),

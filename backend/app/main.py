@@ -1,7 +1,12 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.foundation import router as foundation_router
+
+# Логи сервисов (app.*): ошибки Jev/LLM, латентность, стоимость вызова
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 app = FastAPI(
     title="Помощник проектировщика фундамента",

@@ -1,3 +1,282 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --paper: #eceef3;
+  --sheet: #ffffff;
+  --ink: #161616;
+  --graphite: #6a6a70;
+  --rule: #e2e2e6;
+  --ghost: #f2f2f4;
+  --coral: #ff4f55;
+  --coral-strong: #e03a42;
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+  }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  :focus-visible {
+    outline: 2px solid var(--coral-strong);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Фон и лист */
+  .backdrop {
+    @apply relative min-h-screen overflow-hidden px-4 py-10 sm:px-8 lg:py-14;
+  }
+  .backdrop-quarter {
+    @apply absolute right-0 top-0 h-[22rem] w-[22rem] rounded-bl-full;
+    background: var(--coral);
+  }
+  .backdrop-dots {
+    @apply absolute left-0 top-[26rem] h-[28rem] w-[18rem];
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Crect width='6' height='6' fill='%23161616'/%3E%3C/svg%3E");
+    -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent);
+    mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  }
+  .sheet {
+    @apply relative mx-auto w-full max-w-[74rem] bg-sheet;
+    box-shadow: 0 30px 60px -30px rgba(22, 22, 40, 0.25);
+  }
+
+  /* Шапка */
+  .topbar {
+    @apply flex items-center justify-between gap-6 px-6 py-5 sm:px-12;
+  }
+  .nav-step {
+    @apply relative text-[0.9375rem] text-graphite;
+  }
+  .nav-step[aria-current="step"] {
+    @apply font-medium text-ink;
+  }
+  .nav-step[aria-current="step"]::before {
+    content: "";
+    @apply absolute left-0 h-[6px] w-7;
+    top: -1.25rem;
+    background: var(--coral);
+  }
+
+  /* Первый экран */
+  .hero {
+    @apply relative flex items-center justify-between gap-10 overflow-hidden px-6 pb-16 pt-14 sm:px-12 lg:min-h-[26rem] lg:px-24;
+  }
+  .hero-ghost {
+    @apply pointer-events-none absolute left-6 top-6 select-none font-bold uppercase leading-none sm:left-12;
+    color: var(--ghost);
+    font-size: clamp(6rem, 3rem + 11vw, 13rem);
+    letter-spacing: -0.02em;
+  }
+  .hero-title {
+    @apply max-w-[12ch] font-semibold;
+    font-size: clamp(2.5rem, 1.1rem + 4.2vw, 4.75rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    overflow-wrap: anywhere;
+  }
+  .hero-art {
+    @apply relative hidden h-auto w-[15rem] shrink-0 xl:block;
+  }
+  .mono {
+    @apply font-mono text-[0.8125rem] leading-relaxed text-graphite;
+  }
+
+  .content {
+    @apply px-6 pb-20 sm:px-12 lg:px-24;
+  }
+  .section-heading {
+    @apply font-semibold;
+    font-size: clamp(2rem, 1.5rem + 1.6vw, 2.75rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* Форма */
+  .form-row {
+    @apply grid gap-x-12 gap-y-6 border-t border-rule py-12 lg:grid-cols-[14rem_minmax(0,1fr)];
+  }
+  .form-row:last-child {
+    @apply border-t-0 pb-0 pt-2;
+  }
+  .form-fields {
+    @apply min-w-0 space-y-7;
+  }
+  .form-fields:disabled {
+    @apply opacity-60;
+  }
+  .field-label {
+    @apply mb-2.5 block text-base font-medium;
+  }
+  .field-hint {
+    @apply mt-1.5 font-mono text-xs text-graphite;
+  }
+  .choice {
+    @apply flex h-11 cursor-pointer select-none items-center gap-2 whitespace-nowrap border border-rule bg-sheet px-4 text-[0.9375rem] transition-colors;
+  }
+  .choice:hover {
+    @apply border-ink;
+  }
+  .peer:checked + .choice {
+    @apply border-ink bg-ink text-white;
+  }
+  .peer:focus-visible + .choice {
+    outline: 2px solid var(--coral-strong);
+    outline-offset: 2px;
+  }
+  .peer:disabled + .choice {
+    @apply cursor-default;
+  }
+  .number-input {
+    @apply flex h-11 items-center border border-rule bg-sheet transition-colors;
+  }
+  .number-input:hover,
+  .number-input:focus-within {
+    @apply border-ink;
+  }
+  .number-input:focus-within {
+    outline: 2px solid var(--coral-strong);
+    outline-offset: 2px;
+  }
+  .number-input input {
+    @apply h-full w-full min-w-0 bg-transparent px-4 text-[0.9375rem] tabular-nums outline-none;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  .number-input input::-webkit-outer-spin-button,
+  .number-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .number-input .suffix {
+    @apply pr-4 text-graphite;
+  }
+
+  .btn-primary {
+    @apply inline-flex h-14 min-w-[14rem] items-center justify-center gap-3 px-8 text-lg font-semibold text-white transition-colors;
+    background: var(--coral-strong);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--ink);
+  }
+  .btn-primary:disabled {
+    @apply cursor-not-allowed bg-[#dcdce0] text-[#77777d];
+  }
+  .btn-primary:disabled:has(.spinner) {
+    @apply cursor-wait text-white;
+    background: var(--coral-strong);
+  }
+  .btn-secondary {
+    @apply inline-flex h-10 shrink-0 items-center border border-ink px-5 text-[0.9375rem] font-medium transition-colors;
+  }
+  .btn-secondary:hover {
+    @apply bg-ink text-white;
+  }
+
+  /* Результаты */
+  .winner {
+    @apply mx-auto max-w-[62rem] border-t border-rule pt-14;
+  }
+  .winner-head {
+    @apply grid items-center gap-x-14 gap-y-10 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)];
+  }
+  .badge {
+    @apply inline-block px-4 py-2 text-sm font-medium text-white;
+    background: var(--coral-strong);
+  }
+  .winner-name {
+    @apply mb-7 mt-5;
+    font-size: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .alt-name {
+    @apply text-2xl font-semibold;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .picture {
+    @apply relative block w-full bg-[#f1f1f3];
+  }
+  .picture-empty {
+    @apply grid place-items-center border border-dashed border-[#c9c9cf] p-4 text-center;
+  }
+  .picture-dot {
+    @apply absolute -right-6 -top-6 hidden h-20 w-20 rounded-full md:block;
+    background: var(--coral);
+  }
+
+  .card-text {
+    @apply mt-10;
+  }
+  .list-title {
+    @apply mb-3 text-lg font-semibold;
+  }
+  .point {
+    @apply relative pl-6;
+    line-height: 1.5;
+  }
+  .point::before {
+    @apply absolute left-0 top-0 w-4 text-center font-semibold;
+  }
+  .point-plus::before {
+    content: "+";
+    color: var(--coral-strong);
+  }
+  .point-minus::before {
+    content: "\2212";
+    color: var(--graphite);
+  }
+  .vs-others {
+    @apply mt-10 border-t border-rule pt-8;
+  }
+  .vs-others p {
+    @apply max-w-[68ch];
+    line-height: 1.6;
+  }
+
+  .score-ring {
+    @apply relative h-[5.5rem] w-[5.5rem] shrink-0;
+  }
+  .score-value {
+    @apply absolute inset-0 grid place-items-center text-[1.375rem] font-semibold tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .ring-arc {
+    animation: ring-fill 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .spinner {
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: var(--ring-c);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-arc {
+    animation: none;
+  }
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

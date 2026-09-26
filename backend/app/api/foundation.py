@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.foundation import (
     AnalyzeRequest,
     CompareAnalysisResponse,
+    ExplainRequest,
+    ExplainResponse,
     FoundationInput,
     FoundationRecommendResponse,
     InputOptionsResponse,
@@ -10,7 +14,8 @@ from app.schemas.foundation import (
     ReportRequest,
     ReportResponse,
 )
-from app.services.comparison import build_compare_analysis
+from app.services.comparison import build_compare_analysis, explain_with_retry
+from app.services.deepseek_client import DeepSeekError
 from app.services.jev_client import JevAnalysisError
 from app.services.recommendation import recommend
 from app.services.reference import (
@@ -23,6 +28,8 @@ from app.services.reference import (
     load_prices,
 )
 from app.services.report import generate_report
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/foundation", tags=["foundation"])
 
@@ -48,15 +55,32 @@ def get_options() -> InputOptionsResponse:
 
 @router.post("/recommend", response_model=FoundationRecommendResponse)
 def post_recommend(payload: FoundationInput) -> FoundationRecommendResponse:
+    """Проценты всех 4 типов от Jev. Ошибка Jev → 502 (ТЗ §7), без подмены rule engine."""
     try:
         return recommend(payload)
     except JevAnalysisError as exc:
+        logger.error("/recommend: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/explain", response_model=ExplainResponse, response_model_exclude_none=True)
+def post_explain(payload: ExplainRequest) -> ExplainResponse:
+    """Контракт ТЗ §5: {input, top3} → explanations.{type}.{pros, cons, vs_others у победителя}."""
+    try:
+        return explain_with_retry(payload.input, payload.top3)
+    except DeepSeekError as exc:
+        logger.error("/explain: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @router.post("/analyze", response_model=CompareAnalysisResponse)
 def post_analyze(payload: AnalyzeRequest) -> CompareAnalysisResponse:
-    return build_compare_analysis(payload.input, payload.result)
+    """Совместимость с текущим фронтом: тексты для топ-3, why_recommended = vs_others победителя."""
+    try:
+        return build_compare_analysis(payload.input, payload.result)
+    except DeepSeekError as exc:
+        logger.error("/analyze: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 @router.post("/report", response_model=ReportResponse)

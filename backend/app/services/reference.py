@@ -59,6 +59,41 @@ SEISMICITY_LABELS: dict[str, str] = {
 
 PRELIMINARY_WARNING = "Предварительное решение. Требуется проверка проектировщиком."
 
+# Коды регионов из ТЗ §3 → коды prices.json. Принимаются оба варианта.
+REGION_ALIASES: dict[str, str] = {
+    "krasnoyarsk_krai": "krasnoyarsk",
+    "sverdlovsk_oblast": "ekb",
+}
+
+# Климат региона: качественные категории (без норм и цифр), общие для Jev и LLM.
+# en — в state для Jev (английский для неё основной), ru — в промпт LLM.
+REGION_CLIMATE: dict[str, dict[str, str]] = {
+    "moscow": {
+        "en": "Moscow region, Russia: temperate continental climate, cold winters, moderate seasonal soil freezing",
+        "ru": "умеренно-континентальный климат, холодная зима, умеренное сезонное промерзание грунта",
+    },
+    "spb": {
+        "en": "Saint Petersburg, Russia: humid temperate climate, mild but long winters, moderate seasonal soil freezing, waterlogged soils are common",
+        "ru": "влажный умеренный климат, долгая мягкая зима, умеренное сезонное промерзание грунта",
+    },
+    "ekb": {
+        "en": "Sverdlovsk Oblast (Yekaterinburg), Russia: continental climate, long cold winters, deep seasonal soil freezing",
+        "ru": "континентальный климат, долгая холодная зима, глубокое сезонное промерзание грунта",
+    },
+    "novosibirsk": {
+        "en": "Novosibirsk, Russia: sharply continental climate, very cold long winters, deep seasonal soil freezing",
+        "ru": "резко континентальный климат, очень холодная долгая зима, глубокое сезонное промерзание грунта",
+    },
+    "krasnoyarsk": {
+        "en": "Krasnoyarsk Krai, Russia: sharply continental climate, very cold long winters, deep seasonal soil freezing",
+        "ru": "резко континентальный климат, очень холодная долгая зима, глубокое сезонное промерзание грунта",
+    },
+    "krasnodar": {
+        "en": "Krasnodar, southern Russia: mild climate, short warm winters, shallow seasonal soil freezing",
+        "ru": "мягкий климат, короткая тёплая зима, неглубокое сезонное промерзание грунта",
+    },
+}
+
 
 def _load(name: str) -> dict[str, Any]:
     with open(_DATA_DIR / name, encoding="utf-8") as f:

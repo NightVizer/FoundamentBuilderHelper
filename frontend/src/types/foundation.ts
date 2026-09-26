@@ -1,63 +1,61 @@
 export type SoilType = "sand" | "sandy_loam" | "loam" | "clay" | "fill";
-export type BearingCapacity = "low" | "medium" | "high";
-export type GroundwaterLevel = "low" | "medium" | "high";
+export type Level = "low" | "medium" | "high";
 export type WallMaterial = "wood" | "aerated_concrete" | "brick" | "reinforced_concrete";
+export type Seismicity = "0-6" | "7" | "8+";
 export type FoundationType = "strip" | "slab" | "pile" | "column";
+
+/** Коды регионов бэкенда (prices.json), см. BACKEND_REPORT.md. */
+export type RegionId = "moscow" | "krasnoyarsk" | "ekb";
 
 export interface FoundationInput {
   soil_type: SoilType;
-  bearing_capacity: BearingCapacity;
-  groundwater_level: GroundwaterLevel;
+  bearing_capacity: Level;
+  groundwater_level: Level;
   floors: number;
   building_area_m2: number;
   wall_material: WallMaterial;
-  region: string;
-  seismicity: string;
+  region: RegionId;
+  seismicity: Seismicity;
 }
 
+/** Черновик формы: всё пусто до выбора пользователем. */
+export type FormDraft = {
+  [K in keyof FoundationInput]: FoundationInput[K] extends number ? string : FoundationInput[K] | null;
+};
+
+// Ответ POST /api/foundation/recommend (схема FoundationRecommendResponse бэкенда).
+// Объект целиком возвращается в /analyze, поэтому храним его как есть.
 export interface FoundationOption {
   type: FoundationType;
+  name: string;
   score: number;
-  estimated_cost_rub: number;
-  labor_hours: number;
-  reasons: string[];
+  [extra: string]: unknown;
 }
 
-export interface FoundationRecommendResponse {
+export interface RecommendResponse {
   recommended: FoundationOption;
   alternatives: FoundationOption[];
-  warning: string | null;
-  score_source?: "jev" | "rules_fallback";
+  [extra: string]: unknown;
 }
 
-export interface TypeInsight {
-  type: FoundationType;
-  pros: string[];
-  cons: string[];
-}
-
-export interface CompareAnalysisResponse {
+// Ответ POST /api/foundation/analyze (CompareAnalysisResponse).
+export interface AnalyzeResponse {
   overview: string;
   why_recommended: string;
-  types: TypeInsight[];
+  types: { type: FoundationType; pros: string[]; cons: string[] }[];
   provider: "deepseek" | "template";
 }
 
-export interface ReportResponse {
-  report_text: string;
+export interface RankedOption {
+  type: FoundationType;
+  name: string;
+  score: number;
 }
 
-export const FOUNDATION_TYPE_LABELS: Record<FoundationType, string> = {
-  strip: "Ленточный",
-  slab: "Плитный",
-  pile: "Свайный",
-  column: "Столбчатый",
-};
+export interface Explanation {
+  pros: string[];
+  cons: string[];
+  vs_others?: string;
+}
 
-export const REGIONS = [
-  { id: "moscow", label: "Москва и МО" },
-  { id: "spb", label: "Санкт-Петербург" },
-  { id: "ekb", label: "Екатеринбург" },
-  { id: "novosibirsk", label: "Новосибирск" },
-  { id: "krasnodar", label: "Краснодар" },
-] as const;
+export type Explanations = Partial<Record<FoundationType, Explanation>>;

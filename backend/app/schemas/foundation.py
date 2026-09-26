@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.services.reference import PRELIMINARY_WARNING, region_ids
+from app.services.reference import PRELIMINARY_WARNING, REGION_ALIASES, region_ids
 
 
 class SoilType(str, Enum):
@@ -52,9 +52,12 @@ class FoundationInput(BaseModel):
     @field_validator("region")
     @classmethod
     def _check_region(cls, value: str) -> str:
+        """Принимает коды prices.json и коды из ТЗ (krasnoyarsk_krai, sverdlovsk_oblast)."""
+        value = REGION_ALIASES.get(value, value)
         allowed = region_ids()
         if value not in allowed:
-            raise ValueError(f"Неизвестный регион '{value}'. Допустимые: {', '.join(allowed)}")
+            accepted = [*allowed, *REGION_ALIASES]
+            raise ValueError(f"Неизвестный регион '{value}'. Допустимые: {', '.join(accepted)}")
         return value
 
     @field_validator("seismicity", mode="before")
@@ -97,6 +100,10 @@ class FoundationOption(BaseModel):
 
 
 class FoundationRecommendResponse(BaseModel):
+    scores: dict[FoundationType, int] = Field(
+        default_factory=dict,
+        description="Пригодность всех 4 типов, 0-100, не нормализуется (контракт ТЗ §5)",
+    )
     recommended: FoundationOption
     alternatives: list[FoundationOption]
     warning: str = PRELIMINARY_WARNING
@@ -120,6 +127,33 @@ class CompareAnalysisResponse(BaseModel):
 class AnalyzeRequest(BaseModel):
     input: FoundationInput
     result: FoundationRecommendResponse
+
+
+class ScoredType(BaseModel):
+    type: FoundationType
+    score: int = Field(ge=0, le=100)
+
+
+class ExplainRequest(BaseModel):
+    input: FoundationInput
+    top3: list[ScoredType] = Field(min_length=1, max_length=3, description="Первый элемент считается победителем")
+
+    @model_validator(mode="after")
+    def _unique_types(self) -> "ExplainRequest":
+        types = [item.type for item in self.top3]
+        if len(set(types)) != len(types):
+            raise ValueError("Типы фундамента в top3 не должны повторяться")
+        return self
+
+
+class Explanation(BaseModel):
+    pros: list[str]
+    cons: list[str]
+    vs_others: str | None = Field(default=None, description="Только у победителя")
+
+
+class ExplainResponse(BaseModel):
+    explanations: dict[FoundationType, Explanation]
 
 
 class ReportRequest(BaseModel):
