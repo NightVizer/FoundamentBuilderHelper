@@ -87,14 +87,6 @@ export const FOUNDATION_NAMES: Record<FoundationType, string> = {
   column: "Столбчатый фундамент",
 };
 
-// Карточки «что сравним» на странице ввода: порядок и краткие подсказки.
-export const FOUNDATION_HINTS: { type: FoundationType; name: string; hint: string }[] = [
-  { type: "pile", name: "Свайный", hint: "Для слабых грунтов и высоких грунтовых вод" },
-  { type: "slab", name: "Плитный", hint: "Для неоднородных грунтов и тяжёлых зданий" },
-  { type: "strip", name: "Ленточный", hint: "Для малоэтажных зданий на устойчивых грунтах" },
-  { type: "column", name: "Столбчатый", hint: "Для лёгких построек на прочных грунтах" },
-];
-
 // Короткое слово для бледного фона за заголовком результатов.
 export const FOUNDATION_WORDS: Record<FoundationType, string> = {
   strip: "Лента",

@@ -5,7 +5,6 @@ import { CardGroup, ChoiceGroup, CountField, NumberField, Spinner } from "../com
 import {
   BearingIcon,
   ClimateIcon,
-  FoundationIllustration,
   FrostIcon,
   SeismicIcon,
   SoilIcon,
@@ -18,7 +17,6 @@ import {
   CLIMATE_HINTS,
   CLIMATE_OPTIONS,
   CLIMATE_REGION,
-  FOUNDATION_HINTS,
   FROST_OPTIONS,
   GROUNDWATER_OPTIONS,
   SEISMICITY_OPTIONS,
@@ -248,26 +246,6 @@ export function InputPage({ onCalculated, onError }: Props) {
                 renderIcon={(v) => <SeismicIcon level={v} />}
               />
             </div>
-          </section>
-
-          <section className="form-block form-block-split" aria-labelledby="h-result">
-            <BlockHead
-              n={4}
-              id="h-result"
-              title="Результат"
-              sub="Оценим четыре типа фундамента и покажем три самых подходящих"
-            />
-            <ul className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
-              {FOUNDATION_HINTS.map((f) => (
-                <li key={f.type} className="fnd-card">
-                  <div className="fnd-art">
-                    <FoundationIllustration type={f.type} className="h-[5.5rem] w-auto max-w-full" />
-                  </div>
-                  <p className="mt-4 font-semibold">{f.name}</p>
-                  <p className="mt-1 text-sm leading-snug text-graphite">{f.hint}</p>
-                </li>
-              ))}
-            </ul>
           </section>
         </fieldset>
 

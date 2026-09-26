@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Calculation } from "../App";
 import { fetchExplanations, rankOptions } from "../api/foundation";
 import { ScoreRing, Spinner } from "../components/controls";
-import { FoundationPicture } from "../components/FoundationPicture";
+import { FoundationIllustration } from "../components/icons";
 import { Hero, SectionHeading, Shell } from "../components/Shell";
 import {
   BEARING_OPTIONS,
@@ -16,7 +16,7 @@ import {
   WALL_OPTIONS,
   labelOf,
 } from "../options";
-import type { Explanation, Explanations, FoundationInput, SiteConditions } from "../types/foundation";
+import type { Explanation, Explanations, FoundationInput, FoundationType, SiteConditions } from "../types/foundation";
 
 const ALT_ITEMS = 3;
 
@@ -41,6 +41,18 @@ function describeInput(input: FoundationInput, site: SiteConditions): string {
     `${soil}, ${bearing} несущая способность, ${water} уровень грунтовых вод. ` +
     `${input.floors} ${floorsWord(input.floors)}, ${area} м², стены: ${wall}. ` +
     `Климат ${climate}, промерзание ${frost}, сейсмичность ${seismic}.`
+  );
+}
+
+function FoundationArt({ type, primary, className }: { type: FoundationType; primary?: boolean; className: string }) {
+  return (
+    <div
+      className={`fnd-stage ${primary ? "fnd-stage-primary" : ""} ${className}`}
+      role="img"
+      aria-label={FOUNDATION_NAMES[type]}
+    >
+      <FoundationIllustration type={type} />
+    </div>
   );
 }
 
@@ -131,9 +143,7 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
             </div>
             <div className="relative">
               <span className="picture-dot" aria-hidden />
-              <div className="picture-frame">
-                <FoundationPicture type={winner.type} className="aspect-square" />
-              </div>
+              <FoundationArt type={winner.type} primary className="aspect-square" />
             </div>
           </div>
           <div className="card-text">
@@ -160,9 +170,7 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
               const text = texts?.[option.type];
               return (
                 <article key={option.type} className="alt-card" aria-labelledby={`alt-${option.type}`}>
-                  <div className="picture-frame">
-                    <FoundationPicture type={option.type} className="aspect-[4/3]" />
-                  </div>
+                  <FoundationArt type={option.type} className="aspect-[4/3]" />
                   <div className="mt-6 flex items-center justify-between gap-6">
                     <h3 id={`alt-${option.type}`} className="alt-name">
                       {FOUNDATION_NAMES[option.type]}

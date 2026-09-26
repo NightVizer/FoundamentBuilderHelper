@@ -283,29 +283,7 @@
     @apply cursor-not-allowed text-[#b8b8be];
   }
 
-  /* Типы фундаментов, которые будут сравниваться */
-  .fnd-card {
-    @apply flex flex-col border border-rule bg-sheet p-4;
-    transition: border-color 0.2s ease;
-  }
-  .fnd-art {
-    @apply grid h-32 place-items-center;
-    background:
-      radial-gradient(circle, #dedee3 1px, transparent 1.2px) 0 0 / 12px 12px,
-      #f8f8fa;
-  }
-  .fnd-art .iso {
-    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .fnd-card:hover {
-    @apply border-ink;
-  }
-  .fnd-card:hover .iso {
-    transform: translateY(-4px);
-    --acc-top: #ffe6e7;
-    --acc-l: #ff9296;
-    --acc-r: var(--coral-strong);
-  }
+  /* Изометрия фундамента: серые детали, акцентные в коралловом у лучшего варианта и при наведении */
   .iso {
     --acc-top: #f4f4f6;
     --acc-l: #c9c9d1;
@@ -448,26 +426,53 @@
     box-shadow: 0 28px 48px -30px rgba(22, 22, 40, 0.5);
   }
 
-  .picture {
-    @apply relative block w-full bg-[#f1f1f3];
-  }
-  .picture-empty {
-    @apply grid place-items-center border border-dashed border-[#c9c9cf] p-4 text-center;
-  }
-  .picture-frame {
-    @apply relative overflow-hidden border border-rule bg-sheet;
+  .fnd-stage {
+    @apply relative block w-full overflow-hidden border border-rule;
+    background:
+      radial-gradient(circle, #dedee3 1px, transparent 1.2px) 0 0 / 14px 14px,
+      #f8f8fa;
     transition: border-color 0.25s ease;
   }
-  .picture-frame .picture {
-    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Тень под моделью: сжимается, когда модель приподнимается */
+  .fnd-stage::after {
+    content: "";
+    @apply absolute;
+    left: 24%;
+    right: 24%;
+    bottom: 9%;
+    height: 7%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(22, 22, 40, 0.2), transparent);
+    transition:
+      transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
+      opacity 0.45s ease;
   }
-  .winner:hover .picture-frame,
-  .alt-card:hover .picture-frame {
+  .fnd-stage .iso {
+    @apply absolute left-[16%] top-[14%] z-[1] h-[70%] w-[68%];
+    transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .fnd-stage .iso polygon {
+    vector-effect: non-scaling-stroke;
+    stroke-width: 1.5;
+  }
+  .fnd-stage-primary .iso,
+  .alt-card:hover .fnd-stage .iso {
+    --acc-top: #ffe6e7;
+    --acc-l: #ff9296;
+    --acc-r: var(--coral-strong);
+  }
+  .winner:hover .fnd-stage,
+  .alt-card:hover .fnd-stage {
     @apply border-ink;
   }
-  .winner:hover .picture-frame .picture,
-  .alt-card:hover .picture-frame .picture {
-    transform: scale(1.05);
+  .winner:hover .fnd-stage .iso,
+  .alt-card:hover .fnd-stage .iso {
+    transform: translateY(-8px);
+  }
+  .winner:hover .fnd-stage::after,
+  .alt-card:hover .fnd-stage::after {
+    transform: scale(0.82);
+    opacity: 0.7;
   }
   .picture-dot {
     @apply absolute -right-6 -top-6 hidden h-20 w-20 rounded-full md:block;
@@ -590,13 +595,12 @@
   .spinner {
     animation-duration: 2.4s;
   }
-  .fnd-art .iso,
-  .picture-frame .picture {
+  .fnd-stage .iso,
+  .fnd-stage::after {
     transition: none;
   }
   .choice:hover,
   .opt-card:hover,
-  .fnd-card:hover .iso,
   .btn-primary:hover:not(:disabled),
   .btn-secondary:hover,
   .winner:hover,
@@ -604,8 +608,10 @@
   .winner:hover .picture-dot,
   .winner:hover .score-ring,
   .alt-card:hover .score-ring,
-  .winner:hover .picture-frame .picture,
-  .alt-card:hover .picture-frame .picture,
+  .winner:hover .fnd-stage .iso,
+  .alt-card:hover .fnd-stage .iso,
+  .winner:hover .fnd-stage::after,
+  .alt-card:hover .fnd-stage::after,
   .pc-panel:hover,
   .vs-others:hover,
   .point:hover::before {
