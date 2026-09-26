@@ -103,28 +103,60 @@ const REPORT_STATUS_TEXT: Record<ReportStatus, string> = {
   error: "Отчёт не сформирован, повторите на странице отчёта",
 };
 
-/** Переход к инженерному отчёту: тёмная полоса в стиле самого отчёта. */
+/** Миниатюра листов отчёта: верхний лист с дугой оценки и строками, под ним ещё два. */
+function ReportPages() {
+  return (
+    <div className="teaser-pages" aria-hidden>
+      <span className="teaser-page teaser-page-back" />
+      <span className="teaser-page teaser-page-mid" />
+      <span className="teaser-page teaser-page-front">
+        <svg viewBox="0 0 120 150" className="h-full w-full">
+          <rect x="14" y="16" width="44" height="6" rx="3" fill="var(--ink)" />
+          <rect x="14" y="27" width="28" height="4" rx="2" fill="#d6d6dc" />
+          <path d="M22 78 A26 26 0 0 1 74 78" fill="none" stroke="#ececf0" strokeWidth="9" />
+          <path
+            d="M22 78 A26 26 0 0 1 74 78"
+            fill="none"
+            stroke="var(--coral-strong)"
+            strokeWidth="9"
+            pathLength={100}
+            strokeDasharray="82 100"
+          />
+          <rect x="84" y="58" width="22" height="5" rx="2.5" fill="var(--coral-strong)" />
+          <rect x="84" y="68" width="22" height="5" rx="2.5" fill="var(--ink)" />
+          <rect x="84" y="78" width="22" height="5" rx="2.5" fill="#d6d6dc" />
+          {[96, 108, 120].map((y) => (
+            <rect key={y} x="14" y={y} width="92" height="7" rx="3.5" fill="#f0f0f3" />
+          ))}
+        </svg>
+      </span>
+    </div>
+  );
+}
+
+/** Переход к инженерному отчёту: светлая панель с миниатюрой листов и статусом формирования. */
 function ReportTeaser({ status, onOpen }: { status: ReportStatus; onOpen: () => void }) {
   return (
     <section className="report-teaser" aria-labelledby="report-teaser-title">
-      <div>
+      <ReportPages />
+      <div className="report-teaser-body">
         <h2 id="report-teaser-title" className="report-teaser-title">
-          Отчёт для инженера
+          Отчёт для инженера<span className="text-coral">.</span>
         </h2>
         <p className="report-teaser-text">
           Исходные данные, сравнительная матрица по пяти критериям, разбор трёх вариантов, риски и вывод. Можно скачать
           в PDF.
         </p>
-      </div>
-      <div className="report-teaser-side">
-        <button type="button" className="btn-primary" onClick={onOpen}>
-          Открыть отчёт
-        </button>
-        <p className="report-teaser-status" role="status">
-          {status === "loading" && <Spinner className="h-4 w-4 text-coral" />}
-          {status === "ready" && <span className="report-teaser-dot" aria-hidden />}
-          {REPORT_STATUS_TEXT[status]}
-        </p>
+        <div className="report-teaser-actions">
+          <button type="button" className="teaser-btn" onClick={onOpen}>
+            Открыть отчёт
+          </button>
+          <p className={`teaser-status teaser-status-${status}`} role="status">
+            {status === "loading" && <Spinner className="h-4 w-4 text-coral-strong" />}
+            {status !== "loading" && <span className="teaser-status-dot" aria-hidden />}
+            {REPORT_STATUS_TEXT[status]}
+          </p>
+        </div>
       </div>
     </section>
   );

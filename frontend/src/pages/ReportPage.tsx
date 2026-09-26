@@ -59,7 +59,7 @@ function Gauge({ score }: { score: number }) {
   return (
     <div className="rep-gauge" role="img" aria-label={`Оценка пригодности ${value}%`}>
       <svg viewBox="0 0 120 64">
-        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#2c2c30" strokeWidth="18" />
+        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#ececf0" strokeWidth="18" />
         <path
           d="M10 60 A50 50 0 0 1 110 60"
           fill="none"
@@ -109,7 +109,7 @@ function ReportDocument({ report }: { report: EngineeringReport }) {
           <span className="rep-title-bold">Отчёт</span>
         </h1>
         <div className="rep-meta">
-          <Logo className="rep-logo" light />
+          <Logo className="rep-logo" />
           <p className="rep-meta-number">Отчёт № {report.meta.report_number}</p>
           <p className="rep-meta-date">{longDate(report.meta.date)}</p>
           <p className="rep-meta-version">Версия {report.meta.version}</p>
@@ -369,7 +369,7 @@ export function ReportPage({ calc, onBack }: Props) {
 
       {state.status === "loading" && (
         <div className="rep-doc rep-placeholder" role="status">
-          <Spinner className="h-8 w-8 text-coral" />
+          <Spinner className="h-8 w-8 text-coral-strong" />
           <p className="rep-placeholder-title">Формируем отчёт</p>
           <p className="rep-placeholder-text">Обычно это занимает до минуты.</p>
         </div>

@@ -20,11 +20,10 @@ export function Shell({ aside, children }: { aside?: ReactNode; children: ReactN
   );
 }
 
-/** light: белый вариант для тёмного фона отчёта. */
-export function Logo({ className = "h-6 w-5", light = false }: { className?: string; light?: boolean }) {
+export function Logo({ className = "h-6 w-5" }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 24" className={className} aria-hidden>
-      <rect x="0" y="0" width="12" height="24" fill={light ? "#fff" : "var(--ink)"} />
+      <rect x="0" y="0" width="12" height="24" fill="var(--ink)" />
       <rect x="12" y="12" width="8" height="12" fill="var(--coral)" />
     </svg>
   );
