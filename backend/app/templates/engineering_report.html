@@ -7,16 +7,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap">
 <style>
-  /* Палитра сайта: тушь, коралл, светлые плашки вместо кремовых из референса */
+  /* Палитра сайта и экранной версии отчёта: белый лист, чёрные плашки, коралловые акценты */
   :root {
-    --ground: #161616;
-    --row: #202022;
-    --row-alt: #29292c;
-    --pill: #f2f2f4;
-    --text: #ffffff;
-    --soft: #d4d4d9;
-    --muted: #8e8e96;
-    --divider: rgba(255, 255, 255, 0.3);
+    --ground: #ffffff;
+    --row: #f6f6f8;
+    --row-alt: #eeeef2;
+    --pill: #161616;
+    --pill-text: #ffffff;
+    --text: #161616;
+    --soft: #3c3c42;
+    --muted: #6a6a70;
+    --divider: rgba(22, 22, 40, 0.12);
     --coral: #ff4f55;
     --coral-strong: #e03a42;
   }
@@ -25,21 +26,22 @@
     size: A4;
     margin: 15mm 0 16mm;
     background: var(--ground);
-    /* Сферы в полях: обрезаются краем листа и не заходят на текст */
+    /* Геометрия в полях, как на первом экране сайта: красный круг сверху, чёрный полукруг снизу.
+       Обрезаются краем листа и не заходят на текст */
     @top-center {
       content: "";
       width: 150mm;
-      background: radial-gradient(circle 24mm at 64% -9mm, #7a2429 0, #43171a 50%, #221314 98%, transparent 100%);
+      background: radial-gradient(circle 24mm at 64% -9mm, #ff4f55 99%, #ffffff 100%);
     }
     @bottom-left {
       content: "";
       width: 80mm;
-      background: radial-gradient(circle 27mm at 42% calc(100% + 11mm), #7a2429 0, #43171a 50%, #221314 98%, transparent 100%);
+      background: radial-gradient(circle 11mm at 42% 100%, #161616 99%, #ffffff 100%);
     }
     @bottom-right {
       content: "Отчёт № {{ report.meta.report_number }}\2003\2003" counter(page) " / " counter(pages);
       margin-right: 16mm;
-      color: #8e8e96;
+      color: #6a6a70;
       font: 500 8pt "Jost", "Segoe UI", Arial, sans-serif;
       letter-spacing: 0.04em;
     }
@@ -58,16 +60,16 @@
   p { margin: 0; }
   ul { margin: 0; padding: 0; list-style: none; }
 
-  /* Сфера у правого края: fixed повторяется на каждой странице */
+  /* Полутоновый круг у правого края: fixed повторяется на каждой странице */
   .orb {
     position: fixed;
     z-index: -1;
     top: 118mm;
-    right: -22mm;
+    right: -27mm;
     width: 40mm;
     height: 40mm;
     border-radius: 50%;
-    background: radial-gradient(circle at 38% 34%, #6e1f24 0%, #3a1417 48%, #1d1112 78%);
+    background: radial-gradient(circle, #d4d4da 0.42mm, transparent 0.5mm) 0 0 / 2.9mm 2.9mm;
   }
 
   /* Титул */
@@ -104,14 +106,14 @@
     line-height: 1.1;
     break-after: avoid;
   }
-  .section-num { color: var(--coral); margin-right: 3mm; font-weight: 600; }
+  .section-num { color: var(--coral-strong); margin-right: 3mm; font-weight: 600; }
 
   /* Плашка-заголовок и колонки под ней, как «Overview / Key insights» в референсе */
   .pill {
     display: grid;
     grid-template-columns: var(--cols);
     background: var(--pill);
-    color: var(--ground);
+    color: var(--pill-text);
     border-radius: 999px;
     font-size: 8.5pt;
     font-weight: 500;
@@ -167,7 +169,7 @@
     padding: 2mm 5mm;
     border-radius: 999px;
     background: var(--pill);
-    color: var(--ground);
+    color: var(--pill-text);
     font-size: 8.5pt;
     font-weight: 500;
     letter-spacing: 0.06em;
@@ -183,7 +185,8 @@
     font-weight: 400;
     min-width: 32mm;
   }
-  .metric-first .metric-label { background: var(--coral-strong); color: var(--text); }
+  .metric-first .metric-label { background: var(--coral-strong); color: #ffffff; }
+  .metric-first .metric-value { color: var(--coral-strong); font-weight: 600; }
 
   /* Таблицы: плашка-шапка, скруглённые строки, вертикальные разделители */
   table.grid {
@@ -194,7 +197,7 @@
   }
   table.grid th {
     background: var(--pill);
-    color: var(--ground);
+    color: var(--pill-text);
     padding: 2.2mm 3mm;
     font-size: 8pt;
     font-weight: 500;
@@ -205,6 +208,8 @@
   }
   table.grid th:first-child { border-radius: 999px 0 0 999px; }
   table.grid th:last-child { border-radius: 0 999px 999px 0; }
+  /* Перекрытие стыков: без него между чёрными ячейками шапки видны светлые швы */
+  table.grid th:not(:last-child) { box-shadow: 1px 0 0 var(--pill); }
   table.grid td {
     background: var(--row);
     padding: 2.4mm 3.5mm;
@@ -220,10 +225,10 @@
   table.grid td:last-child { border-radius: 0 3mm 3mm 0; }
   table.grid tr { break-inside: avoid; }
   table.grid .row-head { color: var(--text); font-weight: 500; text-align: left; padding-left: 5mm; }
-  th.is-winner { color: var(--coral-strong); font-weight: 600; }
+  th.is-winner { color: var(--coral); font-weight: 600; }
   .score-row td { color: var(--text); font-size: 13pt; vertical-align: middle; }
   .score-row td.row-head { font-size: 9.5pt; }
-  .score-row .is-winner { color: var(--coral); font-weight: 600; }
+  .score-row .is-winner { color: var(--coral-strong); font-weight: 600; }
 
   /* 4. Разбор */
   .review { margin-top: 7mm; break-inside: avoid; }
@@ -231,13 +236,14 @@
   .review-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6mm; }
   .review-name { margin: 0; font-size: 15pt; font-weight: 600; }
   .review-score { font-size: 13pt; color: var(--soft); }
-  .review-score b { font-weight: 500; color: var(--text); }
+  .review-score b { font-weight: 600; color: var(--text); }
   .tag {
     display: inline-block;
     margin-left: 3mm;
     padding: 0.6mm 3mm;
     border-radius: 999px;
     background: var(--coral-strong);
+    color: #ffffff;
     font-size: 8pt;
     font-weight: 500;
     vertical-align: 2pt;
@@ -246,15 +252,16 @@
   .points li { position: relative; padding-left: 5mm; margin-bottom: 1.4mm; color: var(--soft); }
   .points li::before { position: absolute; left: 0; font-weight: 600; }
   .points-plus li::before { content: "+"; color: var(--text); }
-  .points-minus li::before { content: "\2212"; color: var(--coral); }
+  .points-minus li::before { content: "\2212"; color: var(--coral-strong); }
   .conditions {
     margin-top: 2mm;
     padding: 2.6mm 5mm;
+    border-left: 0.8mm solid var(--coral-strong);
     border-radius: 3mm;
     background: var(--row);
     color: var(--soft);
   }
-  .conditions b { color: var(--text); font-weight: 500; }
+  .conditions b { color: var(--text); font-weight: 600; }
 
   /* 5. Риски */
   table.grid tbody tr.group-row td {
@@ -268,8 +275,8 @@
   table.grid td.risk-desc { color: var(--text); }
   .level { display: flex; align-items: center; justify-content: center; gap: 2mm; white-space: nowrap; }
   .level-bars { display: inline-flex; gap: 0.8mm; }
-  .level-bars i { width: 2.4mm; height: 3.4mm; border-radius: 0.6mm; background: #45454a; }
-  .level-bars i.on { background: var(--coral); }
+  .level-bars i { width: 2.4mm; height: 3.4mm; border-radius: 0.6mm; background: #dcdce0; }
+  .level-bars i.on { background: var(--coral-strong); }
 
   /* 6. Вывод */
   .conclusion { color: var(--soft); }
@@ -283,7 +290,7 @@
     width: 1.6mm;
     height: 1.6mm;
     border-radius: 50%;
-    background: var(--coral);
+    background: var(--coral-strong);
   }
 </style>
 </head>
@@ -302,7 +309,7 @@
   </h1>
   <div class="meta">
     <svg class="logo" viewBox="0 0 20 24" aria-hidden="true">
-      <rect x="0" y="0" width="12" height="24" fill="#ffffff"/>
+      <rect x="0" y="0" width="12" height="24" fill="#161616"/>
       <rect x="12" y="12" width="8" height="12" fill="#ff4f55"/>
     </svg>
     <div class="meta-number">Отчёт № {{ report.meta.report_number }}</div>
@@ -326,7 +333,7 @@
   <div class="scores">
     <div class="gauge" role="img" aria-label="Оценка пригодности {{ winner.score }}%">
       <svg viewBox="0 0 120 64">
-        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#2c2c30" stroke-width="18"/>
+        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#ececf0" stroke-width="18"/>
         <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#e03a42" stroke-width="18"
               pathLength="100" stroke-dasharray="{{ winner.score }} 100"/>
       </svg>
