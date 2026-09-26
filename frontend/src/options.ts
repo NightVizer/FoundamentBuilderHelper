@@ -1,4 +1,13 @@
-import type { FoundationType, Level, RegionId, Seismicity, SoilType, WallMaterial } from "./types/foundation";
+import type {
+  Climate,
+  FoundationType,
+  FrostDepth,
+  Level,
+  RegionId,
+  Seismicity,
+  SoilType,
+  WallMaterial,
+} from "./types/foundation";
 
 export interface Option<T extends string> {
   value: T;
@@ -32,12 +41,37 @@ export const WALL_OPTIONS: Option<WallMaterial>[] = [
   { value: "reinforced_concrete", label: "Железобетон" },
 ];
 
-// Названия из ТЗ, коды из backend/app/data/prices.json.
-// Свердловская область в бэкенде представлена Екатеринбургом (ekb).
-export const REGION_OPTIONS: Option<RegionId>[] = [
-  { value: "moscow", label: "Москва" },
-  { value: "krasnoyarsk", label: "Красноярский край" },
-  { value: "ekb", label: "Свердловская область" },
+export const CLIMATE_OPTIONS: Option<Climate>[] = [
+  { value: "mild", label: "Мягкий" },
+  { value: "humid", label: "Влажный умеренный" },
+  { value: "temperate", label: "Умеренно-континентальный" },
+  { value: "continental", label: "Континентальный" },
+  { value: "sharp", label: "Резко континентальный" },
+];
+
+export const CLIMATE_HINTS: Record<Climate, string> = {
+  mild: "короткая тёплая зима",
+  humid: "долгая мягкая зима",
+  temperate: "холодная зима",
+  continental: "долгая холодная зима",
+  sharp: "очень холодная зима",
+};
+
+// Бэкенд требует код региона (цены и описание климата берутся из prices.json).
+// Каждому типу климата соответствует регион, для которого бэкенд описывает такой климат.
+export const CLIMATE_REGION: Record<Climate, RegionId> = {
+  mild: "krasnodar",
+  humid: "spb",
+  temperate: "moscow",
+  continental: "ekb",
+  sharp: "krasnoyarsk",
+};
+
+export const FROST_OPTIONS: Option<FrostDepth>[] = [
+  { value: "shallow", label: "До 0,8 м" },
+  { value: "moderate", label: "0,8–1,5 м" },
+  { value: "deep", label: "1,5–2,0 м" },
+  { value: "very_deep", label: "Более 2,0 м" },
 ];
 
 export const SEISMICITY_OPTIONS: Option<Seismicity>[] = [

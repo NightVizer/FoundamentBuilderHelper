@@ -33,7 +33,7 @@
   /* Фон и лист */
   .backdrop {
     @apply relative min-h-screen px-4 py-10 sm:px-8 lg:py-14;
-    /* clip, а не hidden: иначе липкая полоса этапов перестанет прилипать */
+    /* clip, а не hidden: иначе липкая нижняя панель формы перестанет прилипать */
     overflow: clip;
   }
   .backdrop-quarter {
@@ -54,76 +54,6 @@
   /* Шапка */
   .topbar {
     @apply flex items-center justify-between gap-6 px-6 py-5 sm:px-12;
-  }
-
-  /* Этапы расчёта */
-  .stepper {
-    @apply sticky top-0 z-20 border-y border-rule px-6 pb-3 pt-4;
-    background: rgba(255, 255, 255, 0.92);
-    -webkit-backdrop-filter: saturate(1.2) blur(10px);
-    backdrop-filter: saturate(1.2) blur(10px);
-  }
-  .stepper-list {
-    @apply mx-auto grid max-w-[46rem] grid-cols-4;
-  }
-  .stepper-item {
-    @apply relative flex justify-center;
-  }
-  .step {
-    @apply flex flex-col items-center gap-1.5 rounded-sm;
-  }
-  .step-dot {
-    @apply relative z-[1] grid h-9 w-9 place-items-center rounded-full bg-sheet text-sm font-semibold tabular-nums text-graphite;
-    border: 1.5px solid #cfcfd5;
-    transition:
-      background-color 0.35s ease,
-      border-color 0.35s ease,
-      color 0.35s ease,
-      box-shadow 0.25s ease,
-      transform 0.2s ease;
-  }
-  .step-label {
-    @apply text-sm text-graphite;
-    transition: color 0.3s ease;
-  }
-  [data-state="current"] .step-dot {
-    @apply text-ink;
-    border: 2px solid var(--ink);
-    box-shadow: 0 0 0 5px rgba(255, 79, 85, 0.16);
-  }
-  [data-state="current"] .step-label {
-    @apply font-semibold text-ink;
-  }
-  [data-state="done"] .step-dot {
-    @apply text-white;
-    background: var(--coral-strong);
-    border-color: var(--coral-strong);
-    animation: step-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
-  }
-  [data-state="done"] .step-label {
-    @apply text-ink;
-  }
-  a.step:hover .step-dot {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 18px -10px rgba(22, 22, 40, 0.55);
-  }
-  a.step:hover .step-label {
-    @apply text-ink;
-  }
-  .step-line {
-    @apply absolute top-[17px] h-0.5 overflow-hidden;
-    left: calc(50% + 24px);
-    right: calc(-50% + 24px);
-    background: var(--rule);
-  }
-  .step-line-fill {
-    @apply block h-full origin-left;
-    background: var(--coral-strong);
-    transform: scaleX(0);
-    transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-  .step-line-fill[data-on="true"] {
-    transform: scaleX(1);
   }
 
   /* Первый экран */
@@ -163,7 +93,6 @@
   /* Форма: разделы */
   .form-block {
     @apply border-t border-rule py-12;
-    scroll-margin-top: 6.5rem;
   }
   .form-block-split {
     @apply grid gap-x-12 gap-y-8 lg:grid-cols-[15rem_minmax(0,1fr)];
@@ -290,6 +219,7 @@
   }
   .opt-title {
     @apply block text-[0.9375rem] font-medium leading-tight;
+    overflow-wrap: break-word;
   }
   .opt-sub {
     @apply mt-0.5 block text-[0.8125rem] leading-snug text-graphite;
@@ -413,12 +343,22 @@
     backdrop-filter: blur(10px);
   }
 
+  .btn-primary,
+  .btn-secondary {
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
   .btn-primary {
-    @apply inline-flex h-14 min-w-[14rem] items-center justify-center gap-3 px-8 text-lg font-semibold text-white transition-colors;
+    @apply inline-flex h-14 min-w-[14rem] items-center justify-center gap-3 px-8 text-lg font-semibold text-white;
     background: var(--coral-strong);
   }
   .btn-primary:hover:not(:disabled) {
     background: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 26px -16px rgba(22, 22, 40, 0.6);
   }
   .btn-primary:disabled {
     @apply cursor-not-allowed bg-[#dcdce0] text-[#77777d];
@@ -428,15 +368,44 @@
     background: var(--coral-strong);
   }
   .btn-secondary {
-    @apply inline-flex h-10 shrink-0 items-center border border-ink px-5 text-[0.9375rem] font-medium transition-colors;
+    @apply inline-flex h-10 shrink-0 items-center border border-ink bg-sheet px-5 text-[0.9375rem] font-medium;
   }
   .btn-secondary:hover {
     @apply bg-ink text-white;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 20px -12px rgba(22, 22, 40, 0.6);
+  }
+  .btn-primary:active:not(:disabled),
+  .btn-secondary:active {
+    transform: translateY(0);
   }
 
-  /* Результаты */
+  /* Результаты: карточки с обводкой, при наведении подъём, тень и тёмная рамка */
+  .winner,
+  .alt-card,
+  .pc-panel,
+  .vs-others {
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
+  }
   .winner {
-    @apply mx-auto max-w-[62rem] border-t border-rule pt-14;
+    @apply relative mx-auto max-w-[62rem] border border-rule bg-sheet p-6 sm:p-10;
+    box-shadow: 0 18px 40px -32px rgba(22, 22, 40, 0.35);
+  }
+  .winner::before {
+    content: "";
+    @apply absolute h-1;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    background: var(--coral-strong);
+  }
+  .winner:hover {
+    @apply border-ink;
+    transform: translateY(-3px);
+    box-shadow: 0 34px 60px -34px rgba(22, 22, 40, 0.5);
   }
   .winner-head {
     @apply grid items-center gap-x-14 gap-y-10 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)];
@@ -444,6 +413,17 @@
   .badge {
     @apply inline-block px-4 py-2 text-sm font-medium text-white;
     background: var(--coral-strong);
+  }
+  .winner-name,
+  .alt-name {
+    width: fit-content;
+    padding-bottom: 0.12em;
+    background: linear-gradient(var(--coral-strong), var(--coral-strong)) 0 100% / 0 3px no-repeat;
+    transition: background-size 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .winner:hover .winner-name,
+  .alt-card:hover .alt-name {
+    background-size: 100% 3px;
   }
   .winner-name {
     @apply mb-7 mt-5;
@@ -458,29 +438,80 @@
     letter-spacing: -0.02em;
   }
 
+  .alt-card {
+    @apply flex flex-col border border-rule bg-sheet p-5 sm:p-6;
+    box-shadow: 0 14px 30px -28px rgba(22, 22, 40, 0.35);
+  }
+  .alt-card:hover {
+    @apply border-ink;
+    transform: translateY(-4px);
+    box-shadow: 0 28px 48px -30px rgba(22, 22, 40, 0.5);
+  }
+
   .picture {
     @apply relative block w-full bg-[#f1f1f3];
   }
   .picture-empty {
     @apply grid place-items-center border border-dashed border-[#c9c9cf] p-4 text-center;
   }
+  .picture-frame {
+    @apply relative overflow-hidden border border-rule bg-sheet;
+    transition: border-color 0.25s ease;
+  }
+  .picture-frame .picture {
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .winner:hover .picture-frame,
+  .alt-card:hover .picture-frame {
+    @apply border-ink;
+  }
+  .winner:hover .picture-frame .picture,
+  .alt-card:hover .picture-frame .picture {
+    transform: scale(1.05);
+  }
   .picture-dot {
     @apply absolute -right-6 -top-6 hidden h-20 w-20 rounded-full md:block;
     background: var(--coral);
+    transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  .winner:hover .picture-dot {
+    transform: translate(6px, -6px) scale(1.1);
   }
 
   .card-text {
-    @apply mt-10;
+    @apply mt-8;
   }
   .list-title {
     @apply mb-3 text-lg font-semibold;
   }
+
+  /* Панели плюсов и минусов у лучшего варианта: цветная верхняя кромка */
+  .pc-panel {
+    @apply border border-rule bg-sheet p-5 sm:p-6;
+    border-top-width: 3px;
+  }
+  .pc-plus {
+    border-top-color: var(--coral-strong);
+  }
+  .pc-minus {
+    border-top-color: var(--ink);
+  }
+  .pc-panel:hover {
+    border-right-color: var(--ink);
+    border-bottom-color: var(--ink);
+    border-left-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 30px -22px rgba(22, 22, 40, 0.45);
+  }
+
   .point {
-    @apply relative pl-6;
+    @apply relative -mx-2 py-1 pl-8 pr-2;
     line-height: 1.5;
+    transition: background-color 0.18s ease;
   }
   .point::before {
-    @apply absolute left-0 top-0 w-4 text-center font-semibold;
+    @apply absolute left-2 top-1 w-4 text-center font-semibold;
+    transition: transform 0.2s ease;
   }
   .point-plus::before {
     content: "+";
@@ -490,8 +521,27 @@
     content: "\2212";
     color: var(--graphite);
   }
+  .point-plus:hover {
+    background: #fff3f3;
+  }
+  .point-minus:hover {
+    background: #f4f4f6;
+  }
+  .point:hover::before {
+    transform: scale(1.35);
+  }
+
   .vs-others {
-    @apply mt-10 border-t border-rule pt-8;
+    @apply mt-4 border border-rule p-5 sm:p-6;
+    border-left: 3px solid var(--coral-strong);
+    background: #fffafa;
+  }
+  .vs-others:hover {
+    border-top-color: var(--ink);
+    border-right-color: var(--ink);
+    border-bottom-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 18px 30px -22px rgba(22, 22, 40, 0.45);
   }
   .vs-others p {
     @apply max-w-[68ch];
@@ -499,7 +549,15 @@
   }
 
   .score-ring {
-    @apply relative h-[5.5rem] w-[5.5rem] shrink-0;
+    @apply relative h-[5.5rem] w-[5.5rem] shrink-0 rounded-full;
+    transition:
+      transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 0.3s ease;
+  }
+  .winner:hover .score-ring,
+  .alt-card:hover .score-ring {
+    transform: scale(1.06);
+    box-shadow: 0 14px 24px -14px rgba(22, 22, 40, 0.45);
   }
   .score-value {
     @apply absolute inset-0 grid place-items-center text-[1.375rem] font-semibold tabular-nums;
@@ -519,15 +577,6 @@
   }
 }
 
-@keyframes step-pop {
-  0% {
-    transform: scale(0.7);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -541,17 +590,25 @@
   .spinner {
     animation-duration: 2.4s;
   }
-  [data-state="done"] .step-dot {
-    animation: none;
-  }
-  .step-line-fill,
-  .fnd-art .iso {
+  .fnd-art .iso,
+  .picture-frame .picture {
     transition: none;
   }
   .choice:hover,
   .opt-card:hover,
-  a.step:hover .step-dot,
-  .fnd-card:hover .iso {
+  .fnd-card:hover .iso,
+  .btn-primary:hover:not(:disabled),
+  .btn-secondary:hover,
+  .winner:hover,
+  .alt-card:hover,
+  .winner:hover .picture-dot,
+  .winner:hover .score-ring,
+  .alt-card:hover .score-ring,
+  .winner:hover .picture-frame .picture,
+  .alt-card:hover .picture-frame .picture,
+  .pc-panel:hover,
+  .vs-others:hover,
+  .point:hover::before {
     transform: none;
   }
 }

@@ -2,19 +2,30 @@ import { useState, type FormEvent } from "react";
 import type { Calculation } from "../App";
 import { fetchRecommendation } from "../api/foundation";
 import { CardGroup, ChoiceGroup, CountField, NumberField, Spinner } from "../components/controls";
-import { BearingIcon, FoundationIllustration, SeismicIcon, SoilIcon, WallIcon, WaterIcon } from "../components/icons";
+import {
+  BearingIcon,
+  ClimateIcon,
+  FoundationIllustration,
+  FrostIcon,
+  SeismicIcon,
+  SoilIcon,
+  WallIcon,
+  WaterIcon,
+} from "../components/icons";
 import { Hero, Shell } from "../components/Shell";
-import { STEP_LABELS, Stepper, type StepItem } from "../components/Stepper";
 import {
   BEARING_OPTIONS,
+  CLIMATE_HINTS,
+  CLIMATE_OPTIONS,
+  CLIMATE_REGION,
   FOUNDATION_HINTS,
+  FROST_OPTIONS,
   GROUNDWATER_OPTIONS,
-  REGION_OPTIONS,
   SEISMICITY_OPTIONS,
   SOIL_OPTIONS,
   WALL_OPTIONS,
 } from "../options";
-import type { FormDraft, FoundationInput } from "../types/foundation";
+import type { FormDraft, FoundationInput, SiteConditions } from "../types/foundation";
 
 const EMPTY: FormDraft = {
   soil_type: null,
@@ -23,7 +34,8 @@ const EMPTY: FormDraft = {
   floors: "",
   building_area_m2: "",
   wall_material: null,
-  region: null,
+  climate: null,
+  frost_depth: null,
   seismicity: null,
 };
 
@@ -42,7 +54,7 @@ function parseArea(raw: string): number | null {
   return raw.trim() !== "" && Number.isFinite(n) && n > 0 && n <= AREA_MAX ? n : null;
 }
 
-function toInput(d: FormDraft): FoundationInput | null {
+function toInput(d: FormDraft): { input: FoundationInput; site: SiteConditions } | null {
   const floors = parseFloors(d.floors);
   const area = parseArea(d.building_area_m2);
   if (
@@ -52,24 +64,26 @@ function toInput(d: FormDraft): FoundationInput | null {
     floors === null ||
     area === null ||
     !d.wall_material ||
-    !d.region ||
+    !d.climate ||
+    !d.frost_depth ||
     !d.seismicity
   ) {
     return null;
   }
   return {
-    soil_type: d.soil_type,
-    bearing_capacity: d.bearing_capacity,
-    groundwater_level: d.groundwater_level,
-    floors,
-    building_area_m2: area,
-    wall_material: d.wall_material,
-    region: d.region,
-    seismicity: d.seismicity,
+    input: {
+      soil_type: d.soil_type,
+      bearing_capacity: d.bearing_capacity,
+      groundwater_level: d.groundwater_level,
+      floors,
+      building_area_m2: area,
+      wall_material: d.wall_material,
+      region: CLIMATE_REGION[d.climate],
+      seismicity: d.seismicity,
+    },
+    site: { climate: d.climate, frost_depth: d.frost_depth },
   };
 }
-
-const SECTION_IDS = ["sec-soil", "sec-building", "sec-site", "sec-result"] as const;
 
 function BlockHead({ n, title, sub, id }: { n: number; title: string; sub: string; id: string }) {
   return (
@@ -91,7 +105,7 @@ interface Props {
 export function InputPage({ onCalculated, onError }: Props) {
   const [draft, setDraft] = useState<FormDraft>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
-  const input = toInput(draft);
+  const ready = toInput(draft);
 
   const set =
     <K extends keyof FormDraft>(key: K) =>
@@ -100,35 +114,31 @@ export function InputPage({ onCalculated, onError }: Props) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!input || submitting) return;
+    if (!ready || submitting) return;
     setSubmitting(true);
     try {
-      const result = await fetchRecommendation(input);
-      onCalculated({ input, result });
+      const result = await fetchRecommendation(ready.input);
+      onCalculated({ ...ready, result });
     } catch (error) {
       onError(error);
     }
   }
 
-  // Поля по разделам 1–3: раздел считается пройденным, когда заполнены все его поля.
-  const sections = [
-    [draft.soil_type, draft.bearing_capacity, draft.groundwater_level],
-    [parseFloors(draft.floors), parseArea(draft.building_area_m2), draft.wall_material],
-    [draft.region, draft.seismicity],
+  const fields = [
+    draft.soil_type,
+    draft.bearing_capacity,
+    draft.groundwater_level,
+    parseFloors(draft.floors),
+    parseArea(draft.building_area_m2),
+    draft.wall_material,
+    draft.climate,
+    draft.frost_depth,
+    draft.seismicity,
   ];
-  const fields = sections.flat();
   const filled = fields.filter((v) => v !== null).length;
-  const sectionDone = sections.map((s) => s.every((v) => v !== null));
-  const firstOpen = sectionDone.indexOf(false);
-  const current = firstOpen === -1 ? SECTION_IDS.length - 1 : firstOpen;
-  const steps: StepItem[] = STEP_LABELS.map((label, i) => ({
-    label,
-    target: SECTION_IDS[i],
-    state: sectionDone[i] ? "done" : i === current ? "current" : "upcoming",
-  }));
 
   return (
-    <Shell stepper={<Stepper steps={steps} />}>
+    <Shell>
       <Hero ghost="Грунт" title="Помощник проектировщика фундамента">
         Опишите грунт, здание и условия площадки. Покажем три типа фундамента, которые подходят лучше
         всего, с оценкой пригодности каждого.
@@ -136,7 +146,7 @@ export function InputPage({ onCalculated, onError }: Props) {
 
       <form onSubmit={submit} className="content" noValidate>
         <fieldset disabled={submitting} className="min-w-0 disabled:opacity-60">
-          <section id={SECTION_IDS[0]} className="form-block" aria-labelledby="h-soil">
+          <section className="form-block" aria-labelledby="h-soil">
             <BlockHead n={1} id="h-soil" title="Грунт" sub="Укажите характеристики грунта на вашем участке" />
             <div className="mt-8 space-y-8">
               <CardGroup
@@ -171,7 +181,7 @@ export function InputPage({ onCalculated, onError }: Props) {
             </div>
           </section>
 
-          <section id={SECTION_IDS[1]} className="form-block form-block-split" aria-labelledby="h-building">
+          <section className="form-block form-block-split" aria-labelledby="h-building">
             <BlockHead n={2} id="h-building" title="Здание" sub="Параметры будущего здания" />
             <div className="min-w-0 space-y-8">
               <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
@@ -206,16 +216,28 @@ export function InputPage({ onCalculated, onError }: Props) {
             </div>
           </section>
 
-          <section id={SECTION_IDS[2]} className="form-block form-block-split" aria-labelledby="h-site">
-            <BlockHead n={3} id="h-site" title="Условия" sub="Регион и сейсмическая активность" />
-            <div className="min-w-0 space-y-6">
-              <ChoiceGroup
-                label="Регион"
-                name="region"
-                options={REGION_OPTIONS}
-                value={draft.region}
-                onChange={set("region")}
-                inline
+          <section className="form-block" aria-labelledby="h-site">
+            <BlockHead n={3} id="h-site" title="Условия" sub="Климат площадки, промерзание грунта и сейсмичность" />
+            <div className="mt-8 space-y-8">
+              <CardGroup
+                label="Климат"
+                name="climate"
+                options={CLIMATE_OPTIONS}
+                value={draft.climate}
+                onChange={set("climate")}
+                renderIcon={(v) => <ClimateIcon climate={v} />}
+                sub={(v) => CLIMATE_HINTS[v]}
+                columns={5}
+              />
+              <CardGroup
+                label="Глубина промерзания"
+                name="frost_depth"
+                options={FROST_OPTIONS}
+                value={draft.frost_depth}
+                onChange={set("frost_depth")}
+                renderIcon={(v) => <FrostIcon depth={v} />}
+                sub="сезонное промерзание"
+                columns={4}
               />
               <ChoiceGroup
                 label="Сейсмичность"
@@ -224,12 +246,11 @@ export function InputPage({ onCalculated, onError }: Props) {
                 value={draft.seismicity}
                 onChange={set("seismicity")}
                 renderIcon={(v) => <SeismicIcon level={v} />}
-                inline
               />
             </div>
           </section>
 
-          <section id={SECTION_IDS[3]} className="form-block form-block-split" aria-labelledby="h-result">
+          <section className="form-block form-block-split" aria-labelledby="h-result">
             <BlockHead
               n={4}
               id="h-result"
@@ -252,11 +273,11 @@ export function InputPage({ onCalculated, onError }: Props) {
 
         <footer className="form-footer">
           <p className="mono" aria-live="polite">
-            {input
+            {ready
               ? "Все поля заполнены"
               : `Заполнено ${filled} из ${fields.length}. Кнопка станет активной, когда заполнены все поля`}
           </p>
-          <button type="submit" className="btn-primary" disabled={!input || submitting}>
+          <button type="submit" className="btn-primary" disabled={!ready || submitting}>
             {submitting && <Spinner className="h-5 w-5" />}
             {submitting ? "Рассчитываем" : "Рассчитать"}
           </button>

@@ -2,11 +2,13 @@ import { useCallback, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { InputPage } from "./pages/InputPage";
 import { ResultsPage } from "./pages/ResultsPage";
-import type { FoundationInput, RecommendResponse } from "./types/foundation";
+import type { FoundationInput, RecommendResponse, SiteConditions } from "./types/foundation";
 
 export interface Calculation {
   input: FoundationInput;
   result: RecommendResponse;
+  /** Условия, которые бэкенд не принимает: показываются в сводке результатов. */
+  site: SiteConditions;
 }
 
 function ErrorScreen() {

@@ -5,7 +5,18 @@ export type Seismicity = "0-6" | "7" | "8+";
 export type FoundationType = "strip" | "slab" | "pile" | "column";
 
 /** Коды регионов бэкенда (prices.json), см. BACKEND_REPORT.md. */
-export type RegionId = "moscow" | "krasnoyarsk" | "ekb";
+export type RegionId = "krasnodar" | "spb" | "moscow" | "ekb" | "krasnoyarsk";
+
+/** Тип климата: выбирается вместо региона, бэкенду уходит код типового региона. */
+export type Climate = "mild" | "humid" | "temperate" | "continental" | "sharp";
+
+/** Глубина сезонного промерзания грунта. Бэкенд её не принимает, показываем в сводке. */
+export type FrostDepth = "shallow" | "moderate" | "deep" | "very_deep";
+
+export interface SiteConditions {
+  climate: Climate;
+  frost_depth: FrostDepth;
+}
 
 export interface FoundationInput {
   soil_type: SoilType;
@@ -18,9 +29,11 @@ export interface FoundationInput {
   seismicity: Seismicity;
 }
 
-/** Черновик формы: всё пусто до выбора пользователем. */
+/** Черновик формы: всё пусто до выбора пользователем. Регион выводится из климата. */
 export type FormDraft = {
-  [K in keyof FoundationInput]: FoundationInput[K] extends number ? string : FoundationInput[K] | null;
+  [K in Exclude<keyof FoundationInput, "region">]: FoundationInput[K] extends number ? string : FoundationInput[K] | null;
+} & {
+  [K in keyof SiteConditions]: SiteConditions[K] | null;
 };
 
 // Ответ POST /api/foundation/recommend (схема FoundationRecommendResponse бэкенда).

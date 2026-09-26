@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { FoundationType, Level, Seismicity, SoilType, WallMaterial } from "../types/foundation";
+import type { Climate, FoundationType, FrostDepth, Level, Seismicity, SoilType, WallMaterial } from "../types/foundation";
 
 // Миниатюры для карточек выбора. Основные линии рисуются currentColor (ink),
 // акцентные детали берут var(--acc) и var(--acc-soft): карточка перекрашивает их
@@ -214,10 +214,105 @@ export function SeismicIcon({ level }: { level: Seismicity }) {
   );
 }
 
-export function CheckIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
+/* Климат: термометр и знак погоды справа */
+
+const MERCURY_Y: Record<Climate, number> = { mild: 8, humid: 12, temperate: 16, continental: 20, sharp: 24 };
+
+function Flake({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   return (
-    <svg viewBox="0 0 14 14" className={className} aria-hidden>
-      <path d="M3 7.5 L6 10.5 L11.5 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+      {[0, 60, 120].map((a) => {
+        const dx = r * Math.cos((a * Math.PI) / 180);
+        const dy = r * Math.sin((a * Math.PI) / 180);
+        return <line key={a} x1={cx - dx} y1={cy - dy} x2={cx + dx} y2={cy + dy} />;
+      })}
+    </g>
+  );
+}
+
+const CLIMATE_SIGN: Record<Climate, ReactNode> = {
+  mild: (
+    <g>
+      <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+        {range(0, 315, 45).map((a) => {
+          const c = Math.cos((a * Math.PI) / 180);
+          const s = Math.sin((a * Math.PI) / 180);
+          return <line key={a} x1={34 + 8.5 * c} y1={19 + 8.5 * s} x2={34 + 11.5 * c} y2={19 + 11.5 * s} />;
+        })}
+      </g>
+      <circle cx="34" cy="19" r="5.5" fill={ACC_SOFT} stroke={ACC} strokeWidth="1.5" />
+    </g>
+  ),
+  humid: (
+    <g>
+      <path
+        d="M27 23 h16 a4 4 0 0 0 0 -8 a6 6 0 0 0 -11.5 -1.5 a4.5 4.5 0 0 0 -4.5 9.5 z"
+        fill={ACC_SOFT}
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <g stroke={ACC} strokeWidth="1.5" strokeLinecap="round">
+        {[30, 36, 42].map((x) => (
+          <line key={x} x1={x} y1="28" x2={x - 1.5} y2="33" />
+        ))}
+      </g>
+    </g>
+  ),
+  temperate: <Flake cx={34} cy={19} r={8} />,
+  continental: (
+    <g>
+      <Flake cx={30} cy={13} r={6} />
+      <Flake cx={39} cy={27} r={6} />
+    </g>
+  ),
+  sharp: (
+    <g>
+      <Flake cx={29} cy={11} r={5.5} />
+      <Flake cx={41} cy={16} r={5} />
+      <Flake cx={32} cy={28} r={6} />
+    </g>
+  ),
+};
+
+export function ClimateIcon({ climate }: { climate: Climate }) {
+  const y = MERCURY_Y[climate];
+  return (
+    <svg viewBox="0 0 48 40" className="h-10 w-12" aria-hidden>
+      <g stroke="currentColor" strokeWidth="1.4">
+        <rect x="8" y="3" width="8" height="26" rx="4" fill="#fff" />
+        <circle cx="12" cy="32" r="5.5" fill="#fff" />
+      </g>
+      <rect x="10.5" y={y} width="3" height={33 - y} rx="1.5" fill={ACC} />
+      <circle cx="12" cy="32" r="3.5" fill={ACC} />
+      {CLIMATE_SIGN[climate]}
+    </svg>
+  );
+}
+
+/* Глубина промерзания: разрез грунта, промёрзший слой до пунктирной границы */
+
+const FROST_Y: Record<FrostDepth, number> = { shallow: 14, moderate: 20, deep: 26, very_deep: 32 };
+
+export function FrostIcon({ depth }: { depth: FrostDepth }) {
+  const y = FROST_Y[depth];
+  return (
+    <svg viewBox="0 0 48 40" className="h-10 w-12" aria-hidden>
+      <rect x="4" y="8" width="40" height={y - 8} fill={ACC_SOFT} />
+      <g stroke={ACC} strokeWidth="1.2" strokeLinecap="round">
+        {range(11, y - 3, 6).flatMap((cy, row) =>
+          (row % 2 ? [15, 27, 39] : [9, 21, 33]).map((cx) => (
+            <path key={`${cx}-${cy}`} d={`M${cx - 1.8} ${cy} h3.6 M${cx} ${cy - 1.8} v3.6`} />
+          )),
+        )}
+      </g>
+      <g fill="currentColor" fillOpacity="0.35">
+        {range(y + 4, 37, 5).flatMap((cy, row) =>
+          (row % 2 ? [10, 22, 34] : [6, 18, 30, 42]).map((cx) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.1" />),
+        )}
+      </g>
+      <line x1="3" y1={y} x2="45" y2={y} stroke={ACC} strokeWidth="1.6" strokeDasharray="3 2.2" />
+      <line x1="3" y1="8" x2="45" y2="8" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-/** Лист на сером фоне: шапка с логотипом, слот справа, под шапкой этапы расчёта. */
-export function Shell({ aside, stepper, children }: { aside?: ReactNode; stepper?: ReactNode; children: ReactNode }) {
+/** Лист на сером фоне: шапка с логотипом и слотом справа. */
+export function Shell({ aside, children }: { aside?: ReactNode; children: ReactNode }) {
   return (
     <div className="backdrop">
       <div className="backdrop-dots" aria-hidden />
@@ -14,7 +14,6 @@ export function Shell({ aside, stepper, children }: { aside?: ReactNode; stepper
           </span>
           {aside}
         </header>
-        {stepper}
         {children}
       </div>
     </div>

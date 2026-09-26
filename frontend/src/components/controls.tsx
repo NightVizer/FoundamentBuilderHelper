@@ -71,8 +71,8 @@ interface CardGroupProps<T extends string> {
   value: T | null;
   onChange: (value: T) => void;
   renderIcon: (value: T) => ReactNode;
-  /** Вторая строка под названием варианта, общая для всех карточек. */
-  sub?: string;
+  /** Вторая строка под названием варианта: общая для всех карточек или своя у каждой. */
+  sub?: string | ((value: T) => string);
   columns: keyof typeof CARD_COLUMNS;
 }
 
@@ -108,7 +108,7 @@ export function CardGroup<T extends string>({
               <span className="opt-icon">{renderIcon(o.value)}</span>
               <span className="min-w-0">
                 <span className="opt-title">{o.label}</span>
-                {sub && <span className="opt-sub">{sub}</span>}
+                {sub && <span className="opt-sub">{typeof sub === "function" ? sub(o.value) : sub}</span>}
               </span>
             </span>
           </label>
