@@ -82,12 +82,12 @@ function ProsCons({ text, limit, wide }: { text: Explanation; limit?: number; wi
   const pros = limit ? text.pros.slice(0, limit) : text.pros;
   const cons = limit ? text.cons.slice(0, limit) : text.cons;
   return (
-    <div className={wide ? "grid gap-4 sm:grid-cols-2" : "space-y-6"}>
-      <section className={wide ? "pc-panel pc-plus" : undefined}>
+    <div className={wide ? "grid gap-4 sm:grid-cols-2" : "space-y-3"}>
+      <section className={`${wide ? "pc-panel" : "pc-soft"} pc-plus`}>
         <h4 className="list-title">Плюсы</h4>
         <ItemList items={pros} sign="plus" empty="Не выделены" />
       </section>
-      <section className={wide ? "pc-panel pc-minus" : "border-t border-rule pt-6"}>
+      <section className={`${wide ? "pc-panel" : "pc-soft"} pc-minus`}>
         <h4 className="list-title">Минусы</h4>
         <ItemList items={cons} sign="minus" empty="Существенных минусов не выявлено" />
       </section>

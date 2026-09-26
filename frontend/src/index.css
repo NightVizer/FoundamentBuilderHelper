@@ -490,16 +490,27 @@
     @apply mb-3 text-lg font-semibold;
   }
 
-  /* Панели плюсов и минусов у лучшего варианта: цветная верхняя кромка */
-  .pc-panel {
-    @apply border border-rule bg-sheet p-5 sm:p-6;
-    border-top-width: 3px;
-  }
+  /* Плюсы на зеленоватом фоне, минусы на красноватом. У лучшего варианта панели
+     с рамкой и цветной верхней кромкой, у альтернатив только заливка. */
   .pc-plus {
-    border-top-color: var(--coral-strong);
+    --pc-bg: #f1f8f3;
+    --pc-hover: #e2f1e7;
+    --pc-mark: #2e8b57;
+    background: var(--pc-bg);
   }
   .pc-minus {
-    border-top-color: var(--ink);
+    --pc-bg: #fff3f3;
+    --pc-hover: #ffe4e5;
+    --pc-mark: var(--coral-strong);
+    background: var(--pc-bg);
+  }
+  .pc-panel {
+    @apply border border-rule p-5 sm:p-6;
+    border-top-width: 3px;
+    border-top-color: var(--pc-mark);
+  }
+  .pc-soft {
+    @apply p-4 sm:p-5;
   }
   .pc-panel:hover {
     border-right-color: var(--ink);
@@ -516,21 +527,17 @@
   }
   .point::before {
     @apply absolute left-2 top-1 w-4 text-center font-semibold;
+    color: var(--pc-mark);
     transition: transform 0.2s ease;
   }
   .point-plus::before {
     content: "+";
-    color: var(--coral-strong);
   }
   .point-minus::before {
     content: "\2212";
-    color: var(--graphite);
   }
-  .point-plus:hover {
-    background: #fff3f3;
-  }
-  .point-minus:hover {
-    background: #f4f4f6;
+  .point:hover {
+    background: var(--pc-hover);
   }
   .point:hover::before {
     transform: scale(1.35);
