@@ -32,7 +32,9 @@
 @layer components {
   /* Фон и лист */
   .backdrop {
-    @apply relative min-h-screen overflow-hidden px-4 py-10 sm:px-8 lg:py-14;
+    @apply relative min-h-screen px-4 py-10 sm:px-8 lg:py-14;
+    /* clip, а не hidden: иначе липкая полоса этапов перестанет прилипать */
+    overflow: clip;
   }
   .backdrop-quarter {
     @apply absolute right-0 top-0 h-[22rem] w-[22rem] rounded-bl-full;
@@ -53,17 +55,75 @@
   .topbar {
     @apply flex items-center justify-between gap-6 px-6 py-5 sm:px-12;
   }
-  .nav-step {
-    @apply relative text-[0.9375rem] text-graphite;
+
+  /* Этапы расчёта */
+  .stepper {
+    @apply sticky top-0 z-20 border-y border-rule px-6 pb-3 pt-4;
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: saturate(1.2) blur(10px);
+    backdrop-filter: saturate(1.2) blur(10px);
   }
-  .nav-step[aria-current="step"] {
-    @apply font-medium text-ink;
+  .stepper-list {
+    @apply mx-auto grid max-w-[46rem] grid-cols-4;
   }
-  .nav-step[aria-current="step"]::before {
-    content: "";
-    @apply absolute left-0 h-[6px] w-7;
-    top: -1.25rem;
-    background: var(--coral);
+  .stepper-item {
+    @apply relative flex justify-center;
+  }
+  .step {
+    @apply flex flex-col items-center gap-1.5 rounded-sm;
+  }
+  .step-dot {
+    @apply relative z-[1] grid h-9 w-9 place-items-center rounded-full bg-sheet text-sm font-semibold tabular-nums text-graphite;
+    border: 1.5px solid #cfcfd5;
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      color 0.35s ease,
+      box-shadow 0.25s ease,
+      transform 0.2s ease;
+  }
+  .step-label {
+    @apply text-sm text-graphite;
+    transition: color 0.3s ease;
+  }
+  [data-state="current"] .step-dot {
+    @apply text-ink;
+    border: 2px solid var(--ink);
+    box-shadow: 0 0 0 5px rgba(255, 79, 85, 0.16);
+  }
+  [data-state="current"] .step-label {
+    @apply font-semibold text-ink;
+  }
+  [data-state="done"] .step-dot {
+    @apply text-white;
+    background: var(--coral-strong);
+    border-color: var(--coral-strong);
+    animation: step-pop 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  [data-state="done"] .step-label {
+    @apply text-ink;
+  }
+  a.step:hover .step-dot {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px -10px rgba(22, 22, 40, 0.55);
+  }
+  a.step:hover .step-label {
+    @apply text-ink;
+  }
+  .step-line {
+    @apply absolute top-[17px] h-0.5 overflow-hidden;
+    left: calc(50% + 24px);
+    right: calc(-50% + 24px);
+    background: var(--rule);
+  }
+  .step-line-fill {
+    @apply block h-full origin-left;
+    background: var(--coral-strong);
+    transform: scaleX(0);
+    transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .step-line-fill[data-on="true"] {
+    transform: scaleX(1);
   }
 
   /* Первый экран */
@@ -100,64 +160,257 @@
     letter-spacing: -0.03em;
   }
 
-  /* Форма */
-  .form-row {
-    @apply grid gap-x-12 gap-y-6 border-t border-rule py-12 lg:grid-cols-[14rem_minmax(0,1fr)];
+  /* Форма: разделы */
+  .form-block {
+    @apply border-t border-rule py-12;
+    scroll-margin-top: 6.5rem;
   }
-  .form-row:last-child {
-    @apply border-t-0 pb-0 pt-2;
+  .form-block-split {
+    @apply grid gap-x-12 gap-y-8 lg:grid-cols-[15rem_minmax(0,1fr)];
   }
-  .form-fields {
-    @apply min-w-0 space-y-7;
+  .block-title {
+    @apply font-semibold;
+    font-size: clamp(1.75rem, 1.4rem + 1.1vw, 2.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
   }
-  .form-fields:disabled {
-    @apply opacity-60;
+  .block-num {
+    @apply mr-2 tabular-nums;
+    color: var(--coral-strong);
+  }
+  .block-sub {
+    @apply mt-2 max-w-[24rem] text-[0.9375rem] leading-snug text-graphite;
   }
   .field-label {
-    @apply mb-2.5 block text-base font-medium;
+    @apply mb-3 block text-base font-medium;
   }
   .field-hint {
     @apply mt-1.5 font-mono text-xs text-graphite;
   }
+
+  /* Общая динамика интерактивных плашек: подъём и тень при наведении */
+  .choice,
+  .opt-card,
+  .count-input button {
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      color 0.18s ease;
+  }
+
+  /* Чипы */
   .choice {
-    @apply flex h-11 cursor-pointer select-none items-center gap-2 whitespace-nowrap border border-rule bg-sheet px-4 text-[0.9375rem] transition-colors;
+    @apply flex h-11 cursor-pointer select-none items-center gap-2.5 whitespace-nowrap border border-rule bg-sheet px-5 text-[0.9375rem];
   }
   .choice:hover {
     @apply border-ink;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -14px rgba(22, 22, 40, 0.5);
   }
   .peer:checked + .choice {
     @apply border-ink bg-ink text-white;
+    box-shadow: 0 10px 20px -14px rgba(22, 22, 40, 0.7);
   }
-  .peer:focus-visible + .choice {
+  .peer:checked + .choice svg {
+    color: var(--coral);
+  }
+  .peer:focus-visible + .choice,
+  .peer:focus-visible + .opt-card {
     outline: 2px solid var(--coral-strong);
     outline-offset: 2px;
   }
+  .choice:active,
+  .opt-card:active {
+    transform: translateY(0);
+  }
+
+  /* Карточки с миниатюрой */
+  .opt-card {
+    @apply relative flex h-full cursor-pointer select-none items-center gap-3.5 border border-rule bg-sheet py-3.5 pl-4 pr-9;
+    min-height: 4.5rem;
+    --acc: var(--graphite);
+    --acc-soft: #ececf0;
+  }
+  .opt-card::after {
+    content: "";
+    @apply absolute right-2.5 top-2.5 h-4 w-4 rounded-full bg-sheet;
+    border: 1.5px solid #cfcfd5;
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease;
+  }
+  .opt-card:hover {
+    @apply border-ink;
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px -18px rgba(22, 22, 40, 0.55);
+    --acc: var(--coral-strong);
+    --acc-soft: #ffe1e2;
+  }
+  .peer:checked + .opt-card {
+    @apply border-ink;
+    background: #fffafa;
+    box-shadow: inset 0 0 0 1px var(--ink);
+    --acc: var(--coral-strong);
+    --acc-soft: #ffd3d5;
+  }
+  .peer:checked + .opt-card:hover {
+    box-shadow:
+      inset 0 0 0 1px var(--ink),
+      0 16px 28px -18px rgba(22, 22, 40, 0.55);
+  }
+  .peer:checked + .opt-card::after {
+    border-color: var(--coral-strong);
+    background: radial-gradient(circle, var(--coral-strong) 0 3.5px, #fff 4px);
+  }
+  .peer:disabled + .opt-card,
   .peer:disabled + .choice {
     @apply cursor-default;
+    transform: none;
   }
-  .number-input {
-    @apply flex h-11 items-center border border-rule bg-sheet transition-colors;
+  /* Узкая карточка: миниатюра над подписью, чтобы длинные слова не вылезали */
+  .opt-wrap {
+    container-type: inline-size;
+  }
+  @container (max-width: 13.5rem) {
+    .opt-card {
+      @apply flex-col items-start gap-2.5;
+    }
+  }
+  .opt-icon {
+    @apply grid h-10 w-12 shrink-0 place-items-center text-ink;
+  }
+  .opt-icon *,
+  .choice svg {
+    transition:
+      fill 0.2s ease,
+      stroke 0.2s ease,
+      color 0.2s ease;
+  }
+  .opt-title {
+    @apply block text-[0.9375rem] font-medium leading-tight;
+  }
+  .opt-sub {
+    @apply mt-0.5 block text-[0.8125rem] leading-snug text-graphite;
+  }
+
+  /* Числовые поля */
+  .number-input,
+  .count-input {
+    @apply flex h-12 items-stretch border border-rule bg-sheet;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
   }
   .number-input:hover,
-  .number-input:focus-within {
+  .count-input:hover,
+  .number-input:focus-within,
+  .count-input:focus-within {
     @apply border-ink;
+    box-shadow: 0 10px 20px -16px rgba(22, 22, 40, 0.45);
   }
-  .number-input:focus-within {
+  .number-input:focus-within,
+  .count-input:focus-within {
     outline: 2px solid var(--coral-strong);
     outline-offset: 2px;
   }
-  .number-input input {
-    @apply h-full w-full min-w-0 bg-transparent px-4 text-[0.9375rem] tabular-nums outline-none;
+  .number-input input,
+  .count-input input {
+    @apply h-full w-full min-w-0 bg-transparent px-4 text-[0.9375rem] tabular-nums outline-none placeholder:text-[#a3a3aa];
     appearance: textfield;
     -moz-appearance: textfield;
   }
+  .count-input input {
+    @apply text-center text-base font-medium;
+  }
   .number-input input::-webkit-outer-spin-button,
-  .number-input input::-webkit-inner-spin-button {
+  .number-input input::-webkit-inner-spin-button,
+  .count-input input::-webkit-outer-spin-button,
+  .count-input input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
   .number-input .suffix {
-    @apply pr-4 text-graphite;
+    @apply grid w-14 shrink-0 place-items-center border-l border-rule text-graphite;
+    background: #f6f6f8;
+  }
+  .count-input button {
+    @apply grid w-12 shrink-0 place-items-center text-ink;
+    background: #f6f6f8;
+  }
+  .count-input button:first-child {
+    @apply border-r border-rule;
+  }
+  .count-input button:last-child {
+    @apply border-l border-rule;
+  }
+  .count-input button:hover:not(:disabled) {
+    @apply text-white;
+    background: var(--ink);
+  }
+  .count-input button:disabled {
+    @apply cursor-not-allowed text-[#b8b8be];
+  }
+
+  /* Типы фундаментов, которые будут сравниваться */
+  .fnd-card {
+    @apply flex flex-col border border-rule bg-sheet p-4;
+    transition: border-color 0.2s ease;
+  }
+  .fnd-art {
+    @apply grid h-32 place-items-center;
+    background:
+      radial-gradient(circle, #dedee3 1px, transparent 1.2px) 0 0 / 12px 12px,
+      #f8f8fa;
+  }
+  .fnd-art .iso {
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .fnd-card:hover {
+    @apply border-ink;
+  }
+  .fnd-card:hover .iso {
+    transform: translateY(-4px);
+    --acc-top: #ffe6e7;
+    --acc-l: #ff9296;
+    --acc-r: var(--coral-strong);
+  }
+  .iso {
+    --acc-top: #f4f4f6;
+    --acc-l: #c9c9d1;
+    --acc-r: #a7a7b1;
+  }
+  .iso polygon {
+    stroke: var(--ink);
+    stroke-width: 1.1;
+    stroke-linejoin: round;
+    transition: fill 0.3s ease;
+  }
+  .iso-t {
+    fill: #fff;
+  }
+  .iso-l {
+    fill: #ececf0;
+  }
+  .iso-r {
+    fill: #d6d6dc;
+  }
+  .iso-acc .iso-t {
+    fill: var(--acc-top);
+  }
+  .iso-acc .iso-l {
+    fill: var(--acc-l);
+  }
+  .iso-acc .iso-r {
+    fill: var(--acc-r);
+  }
+
+  .form-footer {
+    @apply sticky bottom-0 z-10 -mx-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t border-rule px-6 py-5 sm:-mx-12 sm:px-12 lg:-mx-24 lg:px-24;
+    background: rgba(255, 255, 255, 0.94);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
 
   .btn-primary {
@@ -266,6 +519,15 @@
   }
 }
 
+@keyframes step-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -278,5 +540,18 @@
   }
   .spinner {
     animation-duration: 2.4s;
+  }
+  [data-state="done"] .step-dot {
+    animation: none;
+  }
+  .step-line-fill,
+  .fnd-art .iso {
+    transition: none;
+  }
+  .choice:hover,
+  .opt-card:hover,
+  a.step:hover .step-dot,
+  .fnd-card:hover .iso {
+    transform: none;
   }
 }

@@ -1,39 +1,20 @@
 import type { ReactNode } from "react";
 
-type Step = "input" | "results";
-
-const STEPS: { id: Step; label: string }[] = [
-  { id: "input", label: "Ввод данных" },
-  { id: "results", label: "Результаты" },
-];
-
-/** Лист на сером фоне: шапка с логотипом, шагами и слотом справа. */
-export function Shell({ step, aside, children }: { step: Step; aside?: ReactNode; children: ReactNode }) {
+/** Лист на сером фоне: шапка с логотипом, слот справа, под шапкой этапы расчёта. */
+export function Shell({ aside, stepper, children }: { aside?: ReactNode; stepper?: ReactNode; children: ReactNode }) {
   return (
     <div className="backdrop">
       <div className="backdrop-dots" aria-hidden />
       <div className="backdrop-quarter" aria-hidden />
       <div className="sheet">
         <header className="topbar">
-          <div className="flex items-center gap-10">
-            <span className="flex items-center gap-2.5 text-[1.0625rem] font-semibold">
-              <Logo />
-              Фундамент
-            </span>
-            <nav aria-label="Шаги" className="hidden gap-7 sm:flex">
-              {STEPS.map((s) => (
-                <span
-                  key={s.id}
-                  className="nav-step"
-                  aria-current={s.id === step ? "step" : undefined}
-                >
-                  {s.label}
-                </span>
-              ))}
-            </nav>
-          </div>
+          <span className="flex items-center gap-2.5 text-[1.0625rem] font-semibold">
+            <Logo />
+            Фундамент
+          </span>
           {aside}
         </header>
+        {stepper}
         {children}
       </div>
     </div>

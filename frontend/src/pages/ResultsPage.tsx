@@ -4,6 +4,7 @@ import { fetchExplanations, rankOptions } from "../api/foundation";
 import { ScoreRing, Spinner } from "../components/controls";
 import { FoundationPicture } from "../components/FoundationPicture";
 import { Hero, SectionHeading, Shell } from "../components/Shell";
+import { STEP_LABELS, Stepper } from "../components/Stepper";
 import {
   BEARING_OPTIONS,
   FOUNDATION_NAMES,
@@ -18,6 +19,11 @@ import {
 import type { Explanation, Explanations, FoundationInput } from "../types/foundation";
 
 const ALT_ITEMS = 3;
+
+const RESULT_STEPS = STEP_LABELS.map((label, i) => ({
+  label,
+  state: i < STEP_LABELS.length - 1 ? ("done" as const) : ("current" as const),
+}));
 
 function floorsWord(n: number): string {
   const mod10 = n % 10;
@@ -107,7 +113,7 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
 
   return (
     <Shell
-      step="results"
+      stepper={<Stepper steps={RESULT_STEPS} />}
       aside={
         <button type="button" className="btn-secondary" onClick={onNewCalculation}>
           Новый расчёт

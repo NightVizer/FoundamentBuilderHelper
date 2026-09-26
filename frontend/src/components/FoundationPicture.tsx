@@ -1,10 +1,13 @@
 import { FOUNDATION_NAMES } from "../options";
 import type { FoundationType } from "../types/foundation";
 
-// Картинки по типам фундамента. Пока пусто: вместо картинки рисуется заглушка.
-// Добавить: положить файл в frontend/public/foundations/ и вписать путь, например
-// pile: "/foundations/pile.jpg".
-const FOUNDATION_IMAGES: Partial<Record<FoundationType, string>> = {};
+// Картинки по типам фундамента лежат в frontend/public/foundations/.
+const FOUNDATION_IMAGES: Partial<Record<FoundationType, string>> = {
+  strip: "/foundations/strip.jpg",
+  slab: "/foundations/slab.jpg",
+  pile: "/foundations/pile.jpg",
+  column: "/foundations/column.jpg",
+};
 
 export function FoundationPicture({ type, className = "" }: { type: FoundationType; className?: string }) {
   const src = FOUNDATION_IMAGES[type];

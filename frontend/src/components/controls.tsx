@@ -8,18 +8,13 @@ interface ChoiceGroupProps<T extends string> {
   value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
-  /** Необязательная миниатюра слева от подписи варианта. */
-  renderSwatch?: (value: T) => ReactNode;
-  /** "wrap": ширина по содержимому, для длинных подписей. */
-  columns?: 3 | "wrap";
+  /** Необязательная иконка слева от подписи варианта. */
+  renderIcon?: (value: T) => ReactNode;
+  /** Подпись слева от вариантов, а не над ними. */
+  inline?: boolean;
 }
 
-const LAYOUT = {
-  3: "grid max-w-[30rem] grid-cols-3",
-  wrap: "flex flex-wrap",
-} as const;
-
-/** Выбор одного значения: семантически радиогруппа, визуально сегменты. */
+/** Выбор одного значения: семантически радиогруппа, визуально кнопки-чипы. */
 export function ChoiceGroup<T extends string>({
   label,
   name,
@@ -27,16 +22,20 @@ export function ChoiceGroup<T extends string>({
   value,
   onChange,
   disabled,
-  renderSwatch,
-  columns = 3,
+  renderIcon,
+  inline,
 }: ChoiceGroupProps<T>) {
   const labelId = useId();
   return (
-    <div role="radiogroup" aria-labelledby={labelId} className="field">
-      <div id={labelId} className="field-label">
+    <div
+      role="radiogroup"
+      aria-labelledby={labelId}
+      className={inline ? "grid items-center gap-x-6 gap-y-2.5 sm:grid-cols-[8.5rem_minmax(0,1fr)]" : undefined}
+    >
+      <div id={labelId} className={inline ? "field-label mb-0" : "field-label"}>
         {label}
       </div>
-      <div className={`gap-1.5 ${LAYOUT[columns]}`}>
+      <div className="flex flex-wrap gap-2.5">
         {options.map((o) => (
           <label key={o.value} className="relative block">
             <input
@@ -49,12 +48,125 @@ export function ChoiceGroup<T extends string>({
               className="peer sr-only"
             />
             <span className="choice">
-              {renderSwatch?.(o.value)}
+              {renderIcon?.(o.value)}
               <span>{o.label}</span>
             </span>
           </label>
         ))}
       </div>
+    </div>
+  );
+}
+
+const CARD_COLUMNS = {
+  3: "grid-cols-1 sm:grid-cols-3",
+  4: "grid-cols-2 lg:grid-cols-4",
+  5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+} as const;
+
+interface CardGroupProps<T extends string> {
+  label: string;
+  name: string;
+  options: Option<T>[];
+  value: T | null;
+  onChange: (value: T) => void;
+  renderIcon: (value: T) => ReactNode;
+  /** Вторая строка под названием варианта, общая для всех карточек. */
+  sub?: string;
+  columns: keyof typeof CARD_COLUMNS;
+}
+
+/** Радиогруппа из карточек с миниатюрой: для вариантов, которые проще узнать по картинке. */
+export function CardGroup<T extends string>({
+  label,
+  name,
+  options,
+  value,
+  onChange,
+  renderIcon,
+  sub,
+  columns,
+}: CardGroupProps<T>) {
+  const labelId = useId();
+  return (
+    <div role="radiogroup" aria-labelledby={labelId}>
+      <div id={labelId} className="field-label">
+        {label}
+      </div>
+      <div className={`grid gap-3 ${CARD_COLUMNS[columns]}`}>
+        {options.map((o) => (
+          <label key={o.value} className="opt-wrap relative block">
+            <input
+              type="radio"
+              name={name}
+              value={o.value}
+              checked={value === o.value}
+              onChange={() => onChange(o.value)}
+              className="peer sr-only"
+            />
+            <span className="opt-card">
+              <span className="opt-icon">{renderIcon(o.value)}</span>
+              <span className="min-w-0">
+                <span className="opt-title">{o.label}</span>
+                {sub && <span className="opt-sub">{sub}</span>}
+              </span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface CountFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  hint: string;
+  min: number;
+  max: number;
+}
+
+/** Целое число с кнопками − и +, поле можно заполнить и вручную. */
+export function CountField({ label, value, onChange, hint, min, max }: CountFieldProps) {
+  const id = useId();
+  const n = Number.parseInt(value, 10);
+  const step = (delta: number) => {
+    const next = Number.isNaN(n) ? min : Math.min(max, Math.max(min, n + delta));
+    onChange(String(next));
+  };
+  return (
+    <div>
+      <label htmlFor={id} className="field-label">
+        {label}
+      </label>
+      <div className="count-input">
+        <button type="button" onClick={() => step(-1)} disabled={!Number.isNaN(n) && n <= min} aria-label="Уменьшить">
+          <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" aria-hidden>
+            <path d="M3 7h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+        <input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          step={1}
+          value={value}
+          placeholder="0"
+          onChange={(e) => onChange(e.target.value)}
+          aria-describedby={`${id}-hint`}
+        />
+        <button type="button" onClick={() => step(1)} disabled={!Number.isNaN(n) && n >= max} aria-label="Увеличить">
+          <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" aria-hidden>
+            <path d="M3 7h8M7 3v8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      <p id={`${id}-hint`} className="field-hint">
+        {hint}
+      </p>
     </div>
   );
 }
@@ -86,7 +198,7 @@ export function NumberField({
 }: NumberFieldProps) {
   const id = useId();
   return (
-    <div className="field">
+    <div>
       <label htmlFor={id} className="field-label">
         {label}
       </label>
