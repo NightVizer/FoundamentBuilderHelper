@@ -135,11 +135,23 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
         <article className="winner" aria-labelledby="winner-name">
           <div className="winner-head">
             <div>
-              <span className="badge">Наиболее подходящий вариант</span>
+              <span className="badge">
+                <svg viewBox="0 0 20 20" className="h-5 w-5 shrink-0" aria-hidden>
+                  <circle cx="10" cy="10" r="10" fill="#fff" />
+                  <path
+                    d="M5.8 10.4 L8.6 13.1 L14.2 7.3"
+                    fill="none"
+                    stroke="var(--coral-strong)"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Наиболее подходящий вариант
+              </span>
               <h2 id="winner-name" className="winner-name">
                 {FOUNDATION_NAMES[winner.type]}
               </h2>
-              <ScoreRing score={winner.score} primary />
             </div>
             <div className="relative">
               <span className="picture-dot" aria-hidden />

@@ -245,7 +245,7 @@ const RING_R = 40;
 const RING_C = 2 * Math.PI * RING_R;
 
 /** Кольцо пригодности: одинаковый размер у победителя и альтернатив. */
-export function ScoreRing({ score, primary }: { score: number; primary?: boolean }) {
+export function ScoreRing({ score }: { score: number }) {
   const clamped = Math.max(0, Math.min(100, score));
   return (
     <div className="score-ring" role="img" aria-label={`Пригодность ${clamped}%`}>
@@ -256,7 +256,7 @@ export function ScoreRing({ score, primary }: { score: number; primary?: boolean
           cy="50"
           r={RING_R}
           fill="none"
-          stroke={primary ? "var(--coral)" : "var(--ink)"}
+          stroke="var(--ink)"
           strokeWidth="6"
           strokeLinecap="butt"
           strokeDasharray={RING_C}

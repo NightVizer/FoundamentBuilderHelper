@@ -389,24 +389,30 @@
     @apply grid items-center gap-x-14 gap-y-10 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)];
   }
   .badge {
-    @apply inline-block px-4 py-2 text-sm font-medium text-white;
+    @apply inline-flex items-center gap-2 whitespace-nowrap rounded-full py-2 pl-2 pr-4 text-sm font-medium leading-tight text-white sm:gap-2.5 sm:pr-5 sm:text-base;
     background: var(--coral-strong);
+    box-shadow: 0 10px 22px -12px rgba(224, 58, 66, 0.75);
+    transition:
+      transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+      box-shadow 0.25s ease;
   }
-  .winner-name,
+  .winner:hover .badge {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 26px -12px rgba(224, 58, 66, 0.85);
+  }
+  /* Название альтернативы подчёркивается при наведении на карточку */
   .alt-name {
-    width: fit-content;
     padding-bottom: 0.12em;
     background: linear-gradient(var(--coral-strong), var(--coral-strong)) 0 100% / 0 3px no-repeat;
     transition: background-size 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .winner:hover .winner-name,
   .alt-card:hover .alt-name {
     background-size: 100% 3px;
   }
   .winner-name {
-    @apply mb-7 mt-5;
+    @apply mt-6;
     font-size: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
-    line-height: 1;
+    line-height: 1.12;
     font-weight: 600;
     letter-spacing: -0.03em;
   }
@@ -566,7 +572,6 @@
       transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1),
       box-shadow 0.3s ease;
   }
-  .winner:hover .score-ring,
   .alt-card:hover .score-ring {
     transform: scale(1.06);
     box-shadow: 0 14px 24px -14px rgba(22, 22, 40, 0.45);
@@ -613,7 +618,7 @@
   .winner:hover,
   .alt-card:hover,
   .winner:hover .picture-dot,
-  .winner:hover .score-ring,
+  .winner:hover .badge,
   .alt-card:hover .score-ring,
   .winner:hover .fnd-stage .iso,
   .alt-card:hover .fnd-stage .iso,
