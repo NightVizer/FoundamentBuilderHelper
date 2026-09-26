@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Calculation } from "../App";
-import { fetchExplanations, rankOptions } from "../api/foundation";
+import { fetchExplanations, postEngineeringReport, rankOptions } from "../api/foundation";
 import { ScoreRing, Spinner } from "../components/controls";
 import { FoundationIllustration } from "../components/icons";
 import { Hero, SectionHeading, Shell } from "../components/Shell";
@@ -95,16 +95,53 @@ function ProsCons({ text, limit, wide }: { text: Explanation; limit?: number; wi
   );
 }
 
+type ReportStatus = "loading" | "ready" | "error";
+
+const REPORT_STATUS_TEXT: Record<ReportStatus, string> = {
+  loading: "Отчёт формируется",
+  ready: "Отчёт готов",
+  error: "Отчёт не сформирован, повторите на странице отчёта",
+};
+
+/** Переход к инженерному отчёту: тёмная полоса в стиле самого отчёта. */
+function ReportTeaser({ status, onOpen }: { status: ReportStatus; onOpen: () => void }) {
+  return (
+    <section className="report-teaser" aria-labelledby="report-teaser-title">
+      <div>
+        <h2 id="report-teaser-title" className="report-teaser-title">
+          Отчёт для инженера
+        </h2>
+        <p className="report-teaser-text">
+          Исходные данные, сравнительная матрица по пяти критериям, разбор трёх вариантов, риски и вывод. Можно скачать
+          в PDF.
+        </p>
+      </div>
+      <div className="report-teaser-side">
+        <button type="button" className="btn-primary" onClick={onOpen}>
+          Открыть отчёт
+        </button>
+        <p className="report-teaser-status" role="status">
+          {status === "loading" && <Spinner className="h-4 w-4 text-coral" />}
+          {status === "ready" && <span className="report-teaser-dot" aria-hidden />}
+          {REPORT_STATUS_TEXT[status]}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 interface Props {
   calc: Calculation;
   onNewCalculation: () => void;
+  onOpenReport: () => void;
   onError: (error: unknown) => void;
 }
 
-export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
+export function ResultsPage({ calc, onNewCalculation, onOpenReport, onError }: Props) {
   const { input, result, site } = calc;
   const top3 = useMemo(() => rankOptions(result).slice(0, 3), [result]);
   const [texts, setTexts] = useState<Explanations | null>(null);
+  const [reportStatus, setReportStatus] = useState<ReportStatus>("loading");
 
   useEffect(() => {
     let active = true;
@@ -115,6 +152,17 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
       active = false;
     };
   }, [input, result, top3, onError]);
+
+  // Запрос B стартует вместе с /analyze; ошибка показывается на странице отчёта, а не общим экраном.
+  useEffect(() => {
+    let active = true;
+    postEngineeringReport(input, result)
+      .then(() => active && setReportStatus("ready"))
+      .catch(() => active && setReportStatus("error"));
+    return () => {
+      active = false;
+    };
+  }, [input, result]);
 
   const [winner, ...alternatives] = top3;
   const winnerText = texts?.[winner.type];
@@ -195,6 +243,8 @@ export function ResultsPage({ calc, onNewCalculation, onError }: Props) {
             })}
           </div>
         </section>
+
+        <ReportTeaser status={reportStatus} onOpen={onOpenReport} />
       </div>
     </Shell>
   );

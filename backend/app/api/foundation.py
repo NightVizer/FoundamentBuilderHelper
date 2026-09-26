@@ -1,10 +1,14 @@
 import logging
+from urllib.parse import quote
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from app.schemas.foundation import (
     AnalyzeRequest,
     CompareAnalysisResponse,
+    EngineeringPdfRequest,
+    EngineeringReportRequest,
+    EngineeringReportResponse,
     ExplainRequest,
     ExplainResponse,
     FoundationInput,
@@ -16,6 +20,8 @@ from app.schemas.foundation import (
 )
 from app.services.comparison import build_compare_analysis, explain_with_retry
 from app.services.deepseek_client import DeepSeekError
+from app.services.engineering_pdf import PdfRenderError, render_pdf
+from app.services.engineering_report import build_engineering_report
 from app.services.jev_client import JevAnalysisError
 from app.services.recommendation import recommend
 from app.services.reference import (
@@ -86,3 +92,30 @@ def post_analyze(payload: AnalyzeRequest) -> CompareAnalysisResponse:
 @router.post("/report", response_model=ReportResponse)
 def post_report(payload: ReportRequest) -> ReportResponse:
     return generate_report(payload.input, payload.result)
+
+
+@router.post("/report/engineering", response_model=EngineeringReportResponse)
+def post_engineering_report(payload: EngineeringReportRequest) -> EngineeringReportResponse:
+    """Инженерный отчёт: разделы от LLM (запрос B), топ-3 и исходные данные от кода. Ошибка LLM → 502."""
+    try:
+        return build_engineering_report(payload.input, payload.result)
+    except DeepSeekError as exc:
+        logger.error("/report/engineering: %s", exc)
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+@router.post("/report/engineering/pdf", response_class=Response)
+def post_engineering_pdf(payload: EngineeringPdfRequest) -> Response:
+    """PDF готового отчёта со страницы, без повторного запроса к LLM."""
+    report = payload.report
+    try:
+        pdf = render_pdf(report)
+    except PdfRenderError as exc:
+        logger.error("/report/engineering/pdf: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    name = f"Инженерный отчёт {report.meta.report_number}.pdf"
+    disposition = (
+        f'attachment; filename="engineering-report-{report.meta.report_number}.pdf"; '
+        f"filename*=UTF-8''{quote(name)}"
+    )
+    return Response(content=pdf, media_type="application/pdf", headers={"Content-Disposition": disposition})

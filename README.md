@@ -20,6 +20,7 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+python -m playwright install chromium
 uvicorn app.main:app --reload
 ```
 
@@ -59,4 +60,6 @@ npm run dev
 | POST | `/api/foundation/recommend` | Шаг 1: JEV + смета |
 | POST | `/api/foundation/analyze` | Шаг 2: DeepSeek (плюсы/минусы) |
 | POST | `/api/foundation/report` | ТЭО (числа + текст DeepSeek) |
+| POST | `/api/foundation/report/engineering` | Инженерный отчёт (DeepSeek, запрос B) |
+| POST | `/api/foundation/report/engineering/pdf` | PDF инженерного отчёта (Playwright) |
 | GET | `/health` | Проверка сервиса |

@@ -1,5 +1,6 @@
 import type {
   AnalyzeResponse,
+  EngineeringReport,
   Explanations,
   FoundationInput,
   FoundationType,
@@ -81,4 +82,54 @@ export function fetchExplanations(
     explainCache.set(result, pending);
   }
   return pending;
+}
+
+function isReport(data: unknown): data is EngineeringReport {
+  const r = data as EngineeringReport | null;
+  return (
+    !!r &&
+    typeof r.summary_reason === "string" &&
+    typeof r.conclusion === "string" &&
+    [r.top3, r.source_data, r.matrix, r.review, r.risks, r.application_conditions].every(Array.isArray) &&
+    r.top3.length > 0 &&
+    typeof r.meta?.report_number === "string"
+  );
+}
+
+// Инженерный отчёт (запрос B) уходит одновременно с /analyze при открытии результатов.
+// Кэш по ответу /recommend: страница отчёта подхватывает уже начатый запрос.
+const reportCache = new WeakMap<RecommendResponse, Promise<EngineeringReport>>();
+
+export function postEngineeringReport(
+  input: FoundationInput,
+  result: RecommendResponse,
+  { retry = false }: { retry?: boolean } = {},
+): Promise<EngineeringReport> {
+  let pending = retry ? undefined : reportCache.get(result);
+  if (!pending) {
+    pending = postJson<unknown>("/report/engineering", { input, result }).then((data) => {
+      if (!isReport(data)) throw new Error("/report/engineering: неверный формат ответа");
+      return data;
+    });
+    reportCache.set(result, pending);
+  }
+  return pending;
+}
+
+/** PDF готового отчёта с сервера: без повторного запроса к LLM. */
+export async function downloadEngineeringPdf(report: EngineeringReport): Promise<void> {
+  const res = await fetch(`${API_BASE}/report/engineering/pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report }),
+  });
+  if (!res.ok) throw new Error(`/report/engineering/pdf: HTTP ${res.status}`);
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `Инженерный отчёт ${report.meta.report_number}.pdf`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

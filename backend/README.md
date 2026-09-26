@@ -11,6 +11,7 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+python -m playwright install chromium   # браузер для PDF инженерного отчёта
 copy .env.example .env   # необязательно: ключ LLM
 uvicorn app.main:app --reload --port 8000
 ```
@@ -25,6 +26,8 @@ Swagger: http://127.0.0.1:8000/docs · Тесты: `python -m pytest`
 | POST | `/api/foundation/recommend` | расчёт 4 вариантов: score, стоимость, трудозатраты, причины |
 | POST | `/api/foundation/report` | ТЭО: `{input, result}` → параметры, обоснование (LLM или шаблон), сравнение, `report_text` |
 | POST | `/api/foundation/analyze` | плюсы/минусы по каждому типу |
+| POST | `/api/foundation/report/engineering` | инженерный отчёт: `{input, result}` → резюме, исходные данные, матрица, разбор топ-3, риски, вывод (LLM, запрос B); ошибка LLM → 502 |
+| POST | `/api/foundation/report/engineering/pdf` | PDF готового отчёта: `{report}` → `application/pdf` (Jinja2 + Playwright, без повторного запроса к LLM) |
 
 Пример запроса `/recommend`:
 
@@ -52,3 +55,5 @@ Swagger: http://127.0.0.1:8000/docs · Тесты: `python -m pytest`
   `installation_m3`) и коэффициенты, удельные объёмы работ по типам, нормы трудозатрат.
 - `app/services/scoring.py` — rule engine; `pricing.py` — стоимость и трудозатраты;
   `recommendation.py` — конвейер; `report.py` — ТЭО и промпт LLM.
+- `app/services/engineering_report.py` — промпт, пост-фильтр и проверка ответа запроса B;
+  `engineering_pdf.py` + `app/templates/engineering_report.html` — вёрстка и печать PDF.

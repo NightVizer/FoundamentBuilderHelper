@@ -73,3 +73,52 @@ export interface Explanation {
 }
 
 export type Explanations = Partial<Record<FoundationType, Explanation>>;
+
+// Ответ POST /api/foundation/report/engineering (EngineeringReportResponse бэкенда).
+export type RiskProbability = "низкая" | "средняя" | "высокая";
+export type RiskScope = FoundationType | "общие";
+
+export interface MatrixRow {
+  criterion: string;
+  assessments: Partial<Record<FoundationType, string>>;
+}
+
+export interface ReviewItem {
+  type: FoundationType;
+  applicability: string;
+  advantages: string[];
+  disadvantages: string[];
+  conditions: string;
+}
+
+export interface RiskItem {
+  scope: RiskScope;
+  description: string;
+  probability: RiskProbability;
+  consequence: string;
+  mitigation: string;
+}
+
+export interface ReportParameter {
+  label: string;
+  value: string;
+}
+
+export interface SourceGroup {
+  title: string;
+  rows: ReportParameter[];
+}
+
+export interface EngineeringReport {
+  meta: { report_number: string; date: string; version: string };
+  top3: RankedOption[];
+  source_data: SourceGroup[];
+  summary_reason: string;
+  matrix: MatrixRow[];
+  review: ReviewItem[];
+  risks: RiskItem[];
+  conclusion: string;
+  application_conditions: string[];
+  /** Только для отладки, на странице не выводится. */
+  provider: "deepseek" | "template";
+}

@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Инженерный отчёт № {{ report.meta.report_number }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap">
+<style>
+  /* Палитра сайта: тушь, коралл, светлые плашки вместо кремовых из референса */
+  :root {
+    --ground: #161616;
+    --row: #202022;
+    --row-alt: #29292c;
+    --pill: #f2f2f4;
+    --text: #ffffff;
+    --soft: #d4d4d9;
+    --muted: #8e8e96;
+    --divider: rgba(255, 255, 255, 0.3);
+    --coral: #ff4f55;
+    --coral-strong: #e03a42;
+  }
+
+  @page {
+    size: A4;
+    margin: 15mm 0 16mm;
+    background: var(--ground);
+    /* Сферы в полях: обрезаются краем листа и не заходят на текст */
+    @top-center {
+      content: "";
+      width: 150mm;
+      background: radial-gradient(circle 24mm at 64% -9mm, #7a2429 0, #43171a 50%, #221314 98%, transparent 100%);
+    }
+    @bottom-left {
+      content: "";
+      width: 80mm;
+      background: radial-gradient(circle 27mm at 42% calc(100% + 11mm), #7a2429 0, #43171a 50%, #221314 98%, transparent 100%);
+    }
+    @bottom-right {
+      content: "Отчёт № {{ report.meta.report_number }}\2003\2003" counter(page) " / " counter(pages);
+      margin-right: 16mm;
+      color: #8e8e96;
+      font: 500 8pt "Jost", "Segoe UI", Arial, sans-serif;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    padding: 0 16mm;
+    background: var(--ground);
+    color: var(--text);
+    font: 400 10.5pt/1.45 "Jost", "Segoe UI", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  p { margin: 0; }
+  ul { margin: 0; padding: 0; list-style: none; }
+
+  /* Сфера у правого края: fixed повторяется на каждой странице */
+  .orb {
+    position: fixed;
+    z-index: -1;
+    top: 118mm;
+    right: -22mm;
+    width: 40mm;
+    height: 40mm;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 34%, #6e1f24 0%, #3a1417 48%, #1d1112 78%);
+  }
+
+  /* Титул */
+  .title-block {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 8mm;
+    padding-top: 3mm;
+  }
+  .title {
+    margin: 0;
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+  }
+  .title-light { display: block; font-weight: 400; font-size: 38pt; }
+  .title-bold { display: block; font-weight: 700; font-size: 60pt; margin-top: 2mm; letter-spacing: -0.02em; }
+  .meta { text-align: right; padding-bottom: 3mm; }
+  .logo { display: block; width: 9mm; height: 11mm; margin: 0 0 16mm auto; }
+  .meta-number { font-size: 15pt; font-weight: 600; }
+  .meta-date { font-size: 12pt; color: var(--soft); margin-top: 1mm; }
+  .meta-version { font-size: 9pt; color: var(--muted); margin-top: 1mm; }
+
+  /* Разделы */
+  .section { margin-top: 11mm; }
+  .page-break { break-before: page; margin-top: 0; }
+  .section-title {
+    margin: 0 0 4.5mm;
+    font-size: 20pt;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+    break-after: avoid;
+  }
+  .section-num { color: var(--coral); margin-right: 3mm; font-weight: 600; }
+
+  /* Плашка-заголовок и колонки под ней, как «Overview / Key insights» в референсе */
+  .pill {
+    display: grid;
+    grid-template-columns: var(--cols);
+    background: var(--pill);
+    color: var(--ground);
+    border-radius: 999px;
+    font-size: 8.5pt;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.2;
+    break-after: avoid;
+  }
+  .pill > span { padding: 2.2mm 3mm; }
+  .cols {
+    display: grid;
+    grid-template-columns: var(--cols);
+  }
+  .cols > div { padding: 4mm 7mm 2mm; }
+  .cols > div + div { border-left: 1px solid var(--divider); }
+  .split-2 { --cols: 1fr 1fr; }
+  .split-3 { --cols: 1fr 1fr 1fr; }
+
+  /* 2. Исходные данные */
+  .params { margin: 0; }
+  .params dt { color: var(--muted); font-size: 8.5pt; line-height: 1.3; }
+  .params dd { margin: 0.4mm 0 2.6mm; font-size: 11pt; line-height: 1.3; }
+
+  /* 1. Резюме */
+  .winner-name { font-size: 17pt; font-weight: 600; line-height: 1.15; }
+  .winner-note { color: var(--muted); font-size: 9pt; margin-top: 1.5mm; }
+  .scores {
+    display: grid;
+    grid-template-columns: 52mm 1fr;
+    align-items: center;
+    gap: 10mm;
+    margin-top: 7mm;
+    break-inside: avoid;
+  }
+  .gauge { position: relative; width: 52mm; }
+  .gauge svg { display: block; width: 100%; height: auto; }
+  .gauge-value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1mm;
+    text-align: center;
+    font-size: 22pt;
+    font-weight: 500;
+  }
+  .metrics { display: grid; gap: 3.5mm; }
+  .metric { display: flex; align-items: center; }
+  .metric-label {
+    position: relative;
+    z-index: 1;
+    min-width: 58mm;
+    padding: 2mm 5mm;
+    border-radius: 999px;
+    background: var(--pill);
+    color: var(--ground);
+    font-size: 8.5pt;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .metric-value {
+    margin-left: -6mm;
+    padding: 1mm 7mm 1mm 11mm;
+    border-radius: 0 999px 999px 0;
+    background: var(--row-alt);
+    font-size: 15pt;
+    font-weight: 400;
+    min-width: 32mm;
+  }
+  .metric-first .metric-label { background: var(--coral-strong); color: var(--text); }
+
+  /* Таблицы: плашка-шапка, скруглённые строки, вертикальные разделители */
+  table.grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 1.4mm;
+    table-layout: fixed;
+  }
+  table.grid th {
+    background: var(--pill);
+    color: var(--ground);
+    padding: 2.2mm 3mm;
+    font-size: 8pt;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.2;
+  }
+  table.grid th:first-child { border-radius: 999px 0 0 999px; }
+  table.grid th:last-child { border-radius: 0 999px 999px 0; }
+  table.grid td {
+    background: var(--row);
+    padding: 2.4mm 3.5mm;
+    font-size: 9.5pt;
+    line-height: 1.35;
+    vertical-align: top;
+    text-align: center;
+    color: var(--soft);
+  }
+  table.grid tbody tr:nth-child(even) td { background: var(--row-alt); }
+  table.grid td + td { border-left: 1px solid var(--divider); }
+  table.grid td:first-child { border-radius: 3mm 0 0 3mm; }
+  table.grid td:last-child { border-radius: 0 3mm 3mm 0; }
+  table.grid tr { break-inside: avoid; }
+  table.grid .row-head { color: var(--text); font-weight: 500; text-align: left; padding-left: 5mm; }
+  th.is-winner { color: var(--coral-strong); font-weight: 600; }
+  .score-row td { color: var(--text); font-size: 13pt; vertical-align: middle; }
+  .score-row td.row-head { font-size: 9.5pt; }
+  .score-row .is-winner { color: var(--coral); font-weight: 600; }
+
+  /* 4. Разбор */
+  .review { margin-top: 7mm; break-inside: avoid; }
+  .review:first-of-type { margin-top: 0; }
+  .review-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6mm; }
+  .review-name { margin: 0; font-size: 15pt; font-weight: 600; }
+  .review-score { font-size: 13pt; color: var(--soft); }
+  .review-score b { font-weight: 500; color: var(--text); }
+  .tag {
+    display: inline-block;
+    margin-left: 3mm;
+    padding: 0.6mm 3mm;
+    border-radius: 999px;
+    background: var(--coral-strong);
+    font-size: 8pt;
+    font-weight: 500;
+    vertical-align: 2pt;
+  }
+  .review-text { margin: 2.5mm 0 4mm; color: var(--soft); max-width: 165mm; }
+  .points li { position: relative; padding-left: 5mm; margin-bottom: 1.4mm; color: var(--soft); }
+  .points li::before { position: absolute; left: 0; font-weight: 600; }
+  .points-plus li::before { content: "+"; color: var(--text); }
+  .points-minus li::before { content: "\2212"; color: var(--coral); }
+  .conditions {
+    margin-top: 2mm;
+    padding: 2.6mm 5mm;
+    border-radius: 3mm;
+    background: var(--row);
+    color: var(--soft);
+  }
+  .conditions b { color: var(--text); font-weight: 500; }
+
+  /* 5. Риски */
+  table.grid tbody tr.group-row td {
+    background: none;
+    padding: 3.5mm 0 0.5mm 5mm;
+    text-align: left;
+    color: var(--text);
+    font-size: 11pt;
+    font-weight: 600;
+  }
+  table.grid td.risk-desc { color: var(--text); }
+  .level { display: flex; align-items: center; justify-content: center; gap: 2mm; white-space: nowrap; }
+  .level-bars { display: inline-flex; gap: 0.8mm; }
+  .level-bars i { width: 2.4mm; height: 3.4mm; border-radius: 0.6mm; background: #45454a; }
+  .level-bars i.on { background: var(--coral); }
+
+  /* 6. Вывод */
+  .conclusion { color: var(--soft); }
+  .conclusion p { max-width: 90mm; }
+  .conds li { position: relative; padding-left: 5mm; margin-bottom: 1.6mm; color: var(--soft); }
+  .conds li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2.3mm;
+    width: 1.6mm;
+    height: 1.6mm;
+    border-radius: 50%;
+    background: var(--coral);
+  }
+</style>
+</head>
+<body>
+{%- set top = report.top3 -%}
+{%- set winner = top[0] -%}
+{%- set levels = {"низкая": 1, "средняя": 2, "высокая": 3} -%}
+
+<div class="orb"></div>
+
+<header class="title-block">
+  <h1 class="title">
+    <span class="title-light">Выбор типа</span>
+    <span class="title-light">фундамента</span>
+    <span class="title-bold">Отчёт</span>
+  </h1>
+  <div class="meta">
+    <svg class="logo" viewBox="0 0 20 24" aria-hidden="true">
+      <rect x="0" y="0" width="12" height="24" fill="#ffffff"/>
+      <rect x="12" y="12" width="8" height="12" fill="#ff4f55"/>
+    </svg>
+    <div class="meta-number">Отчёт № {{ report.meta.report_number }}</div>
+    <div class="meta-date">{{ report.meta.date | long_date }}</div>
+    <div class="meta-version">Версия {{ report.meta.version }}</div>
+  </div>
+</header>
+
+<section class="section">
+  <h2 class="section-title"><span class="section-num">1</span>Резюме</h2>
+  <div class="split-2">
+    <div class="pill"><span>Рекомендованный вариант</span><span>Обоснование выбора</span></div>
+    <div class="cols">
+      <div>
+        <div class="winner-name">{{ winner.name }}</div>
+        <div class="winner-note">Наибольшая оценка пригодности среди рассмотренных типов</div>
+      </div>
+      <div><p>{{ report.summary_reason }}</p></div>
+    </div>
+  </div>
+  <div class="scores">
+    <div class="gauge" role="img" aria-label="Оценка пригодности {{ winner.score }}%">
+      <svg viewBox="0 0 120 64">
+        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#2c2c30" stroke-width="18"/>
+        <path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="#e03a42" stroke-width="18"
+              pathLength="100" stroke-dasharray="{{ winner.score }} 100"/>
+      </svg>
+      <div class="gauge-value">{{ winner.score }}%</div>
+    </div>
+    <div class="metrics">
+      {%- for item in top %}
+      <div class="metric{% if loop.first %} metric-first{% endif %}">
+        <span class="metric-label">{{ item.name }}</span>
+        <span class="metric-value">{{ item.score }}%</span>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2 class="section-title"><span class="section-num">2</span>Исходные данные</h2>
+  <div class="split-3">
+    <div class="pill">{% for group in report.source_data %}<span>{{ group.title }}</span>{% endfor %}</div>
+    <div class="cols">
+      {%- for group in report.source_data %}
+      <div>
+        <dl class="params">
+          {%- for row in group.rows %}
+          <dt>{{ row.label }}</dt>
+          <dd>{{ row.value }}</dd>
+          {%- endfor %}
+        </dl>
+      </div>
+      {%- endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section page-break">
+  <h2 class="section-title"><span class="section-num">3</span>Сравнительная матрица</h2>
+  <table class="grid matrix">
+    <colgroup><col style="width: 25%">{% for item in top %}<col>{% endfor %}</colgroup>
+    <thead>
+      <tr>
+        <th>Критерий</th>
+        {%- for item in top %}
+        <th{% if loop.first %} class="is-winner"{% endif %}>{{ short[item.type] }}</th>
+        {%- endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="score-row">
+        <td class="row-head">Оценка пригодности</td>
+        {%- for item in top %}
+        <td{% if loop.first %} class="is-winner"{% endif %}>{{ item.score }}%</td>
+        {%- endfor %}
+      </tr>
+      {%- for row in report.matrix %}
+      <tr>
+        <td class="row-head">{{ row.criterion }}</td>
+        {%- for item in top %}
+        <td>{{ row.assessments[item.type] }}</td>
+        {%- endfor %}
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <h2 class="section-title"><span class="section-num">4</span>Детальный разбор вариантов</h2>
+  {%- for item in report.review %}
+  {%- set score = (top | selectattr("type", "equalto", item.type) | first).score %}
+  <article class="review">
+    <div class="review-head">
+      <h3 class="review-name">{{ names[item.type] }}{% if loop.first %}<span class="tag">Рекомендован</span>{% endif %}</h3>
+      <div class="review-score">Оценка пригодности <b>{{ score }}%</b></div>
+    </div>
+    <p class="review-text">{{ item.applicability }}</p>
+    <div class="split-2">
+      <div class="pill"><span>Преимущества</span><span>Недостатки</span></div>
+      <div class="cols">
+        <div><ul class="points points-plus">{% for p in item.advantages %}<li>{{ p }}</li>{% endfor %}</ul></div>
+        <div><ul class="points points-minus">{% for p in item.disadvantages %}<li>{{ p }}</li>{% endfor %}</ul></div>
+      </div>
+    </div>
+    <p class="conditions"><b>Условия применения.</b> {{ item.conditions }}</p>
+  </article>
+  {%- endfor %}
+</section>
+
+<section class="section page-break">
+  <h2 class="section-title"><span class="section-num">5</span>Риски</h2>
+  <table class="grid risks">
+    <colgroup><col style="width: 28%"><col style="width: 17%"><col style="width: 27%"><col style="width: 28%"></colgroup>
+    <thead>
+      <tr><th>Описание</th><th>Вероятность</th><th>Последствия</th><th>Мероприятие по снижению</th></tr>
+    </thead>
+    <tbody>
+      {%- for scope in top | map(attribute="type") | list + ["общие"] %}
+      {%- set group = report.risks | selectattr("scope", "equalto", scope) | list %}
+      {%- if group %}
+      <tr class="group-row"><td colspan="4">{{ names[scope] if scope in names else "Общие для площадки" }}</td></tr>
+      {%- for risk in group %}
+      <tr>
+        <td class="risk-desc">{{ risk.description }}</td>
+        <td>
+          <span class="level">
+            <span class="level-bars">{% for i in range(3) %}<i{% if i < levels[risk.probability] %} class="on"{% endif %}></i>{% endfor %}</span>
+            {{ risk.probability }}
+          </span>
+        </td>
+        <td>{{ risk.consequence }}</td>
+        <td>{{ risk.mitigation }}</td>
+      </tr>
+      {%- endfor %}
+      {%- endif %}
+      {%- endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <h2 class="section-title"><span class="section-num">6</span>Вывод</h2>
+  <div class="split-2">
+    <div class="pill"><span>Итог</span><span>Условия применения результатов</span></div>
+    <div class="cols">
+      <div class="conclusion"><p>{{ report.conclusion }}</p></div>
+      <div><ul class="conds">{% for c in report.application_conditions %}<li>{{ c }}</li>{% endfor %}</ul></div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

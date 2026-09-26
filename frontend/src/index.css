@@ -652,6 +652,415 @@
   .spinner {
     animation: spin 0.9s linear infinite;
   }
+
+  /* Результаты: переход к инженерному отчёту, тёмная полоса в стиле самого отчёта */
+  .report-teaser {
+    @apply relative mx-auto mt-20 grid max-w-[62rem] items-center gap-x-12 gap-y-8 overflow-hidden px-6 py-10 text-white sm:px-10 md:grid-cols-[minmax(0,1fr)_auto];
+    background: var(--ink);
+    isolation: isolate;
+  }
+  .report-teaser::after {
+    content: "";
+    @apply pointer-events-none absolute h-44 w-44 rounded-full;
+    z-index: -1;
+    right: -4.5rem;
+    top: -5.5rem;
+    background: radial-gradient(circle at 38% 34%, #6e1f24 0%, #3a1417 48%, #1d1112 78%);
+  }
+  .report-teaser-title {
+    @apply font-semibold;
+    font-size: clamp(1.75rem, 1.3rem + 1.2vw, 2.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+  }
+  .report-teaser-text {
+    @apply mt-3 max-w-[34rem] text-[0.9375rem] leading-relaxed;
+    color: #c9c9cf;
+  }
+  .report-teaser-side {
+    @apply flex flex-col items-start gap-3 md:items-end;
+  }
+  .report-teaser-status {
+    @apply flex items-center gap-2 text-sm;
+    color: #a3a3aa;
+  }
+  .report-teaser-dot {
+    @apply h-2 w-2 rounded-full;
+    background: var(--coral);
+  }
+  .report-teaser .btn-primary:hover:not(:disabled),
+  .rep-doc .btn-primary:hover:not(:disabled) {
+    @apply text-ink;
+    background: #fff;
+  }
+
+  /* Страница отчёта: панель действий над тёмным листом */
+  .report-bar {
+    @apply sticky top-0 z-20 mx-auto mb-8 flex max-w-[60rem] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4 sm:px-6;
+    background: rgba(255, 255, 255, 0.94);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 40px -32px rgba(22, 22, 40, 0.35);
+  }
+  .report-actions {
+    @apply flex flex-wrap items-center gap-3;
+  }
+  .report-download {
+    @apply h-10 min-w-0 gap-2.5 px-5 text-[0.9375rem];
+  }
+  .report-bar-error {
+    @apply w-full text-sm font-medium;
+    color: var(--coral-strong);
+  }
+
+  /* Лист отчёта: палитра и структура как в PDF (backend/app/templates/engineering_report.html) */
+  .rep-doc {
+    --r-row: #202022;
+    --r-row-alt: #29292c;
+    --r-pill: #f2f2f4;
+    --r-soft: #d4d4d9;
+    --r-muted: #8e8e96;
+    --r-divider: rgba(255, 255, 255, 0.3);
+    @apply relative mx-auto max-w-[60rem] overflow-hidden px-5 pb-16 pt-12 text-white sm:px-10 lg:px-14;
+    background: var(--ink);
+    box-shadow: 0 30px 60px -30px rgba(22, 22, 40, 0.45);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    isolation: isolate;
+  }
+  .rep-orb {
+    @apply pointer-events-none absolute rounded-full;
+    z-index: -1;
+    background: radial-gradient(circle at 38% 34%, #6e1f24 0%, #3a1417 48%, #1d1112 78%);
+  }
+  .rep-orb-top {
+    @apply h-36 w-36;
+    top: -5.5rem;
+    left: 56%;
+  }
+  .rep-orb-side {
+    @apply h-32 w-32;
+    top: 30rem;
+    right: -4.5rem;
+  }
+  .rep-orb-bottom {
+    @apply h-40 w-40;
+    bottom: -6rem;
+    left: 8%;
+  }
+
+  .rep-title-block {
+    @apply grid items-end gap-8 sm:grid-cols-[minmax(0,1fr)_auto];
+  }
+  .rep-title {
+    text-transform: uppercase;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+  }
+  .rep-title-light {
+    @apply block font-normal;
+    font-size: clamp(2rem, 1.2rem + 3.4vw, 3.4rem);
+  }
+  .rep-title-bold {
+    @apply mt-2 block font-bold;
+    font-size: clamp(3.1rem, 1.9rem + 5.4vw, 5.4rem);
+    letter-spacing: -0.02em;
+  }
+  .rep-meta {
+    @apply sm:pb-2 sm:text-right;
+  }
+  .rep-logo {
+    @apply mb-14 ml-auto hidden h-11 w-9 sm:block;
+  }
+  .rep-meta-number {
+    @apply text-xl font-semibold;
+  }
+  .rep-meta-date {
+    @apply mt-1 text-[1.0625rem];
+    color: var(--r-soft);
+  }
+  .rep-meta-version {
+    @apply mt-1 text-[0.8125rem];
+    color: var(--r-muted);
+  }
+
+  .rep-section {
+    @apply mt-14;
+  }
+  .rep-section-title {
+    @apply mb-5 font-medium uppercase;
+    font-size: clamp(1.4rem, 1.1rem + 1vw, 1.75rem);
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+  }
+  .rep-section-num {
+    @apply mr-3 font-semibold;
+    color: var(--coral);
+  }
+
+  /* Плашка с подписями колонок; на узком экране у каждой колонки своя */
+  .rep-pill {
+    @apply rounded-full text-center font-medium uppercase text-ink;
+    background: var(--r-pill);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+  }
+  .rep-pill-row {
+    @apply hidden;
+  }
+  .rep-pill-single {
+    @apply mb-3.5 px-4 py-2;
+  }
+  .rep-cols {
+    @apply grid gap-6;
+  }
+  @media (min-width: 640px) {
+    .rep-pill-row {
+      @apply grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+    .rep-pill-row > span {
+      @apply px-3 py-2.5;
+    }
+    .rep-pill-single {
+      @apply sr-only;
+    }
+    .rep-cols {
+      @apply gap-0;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    }
+    .rep-cols > section {
+      @apply px-7 pb-2 pt-4;
+    }
+    .rep-cols > section + section {
+      border-left: 1px solid var(--r-divider);
+    }
+  }
+
+  .rep-winner-name {
+    @apply text-2xl font-semibold;
+    line-height: 1.15;
+  }
+  .rep-winner-note {
+    @apply mt-1.5 text-[0.8125rem];
+    color: var(--r-muted);
+  }
+  .rep-scores {
+    @apply mt-9 grid items-center gap-8 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-10;
+  }
+  .rep-gauge {
+    @apply relative w-48;
+  }
+  .rep-gauge svg {
+    @apply block h-auto w-full;
+  }
+  .rep-gauge-value {
+    @apply absolute inset-x-0 text-center text-[2rem] font-medium;
+    bottom: -0.2rem;
+  }
+  .rep-gauge-arc {
+    animation: gauge-fill 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .rep-metrics {
+    @apply grid gap-3;
+  }
+  .rep-metric {
+    @apply flex items-center;
+  }
+  .rep-metric-label {
+    @apply relative z-[1] rounded-full px-4 py-2 text-center font-medium uppercase text-ink;
+    width: min(15rem, 64%);
+    background: var(--r-pill);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+  }
+  .rep-metric-value {
+    @apply min-w-[7.5rem] rounded-r-full text-[1.3rem];
+    margin-left: -1.4rem;
+    padding: 0.1rem 1.4rem 0.1rem 2.4rem;
+    background: var(--r-row-alt);
+  }
+  .rep-metric-first .rep-metric-label {
+    @apply text-white;
+    background: var(--coral-strong);
+  }
+
+  .rep-params > div + div {
+    @apply mt-3;
+  }
+  .rep-params dt {
+    @apply text-[0.8125rem];
+    color: var(--r-muted);
+  }
+  .rep-params dd {
+    @apply mt-0.5;
+  }
+
+  /* Таблицы: плашка-шапка, скруглённые строки, вертикальные разделители */
+  .rep-scroll {
+    @apply -mx-1 overflow-x-auto px-1;
+  }
+  .rep-table {
+    @apply w-full min-w-[40rem] table-fixed;
+    border-collapse: separate;
+    border-spacing: 0 0.4rem;
+  }
+  .rep-table thead th {
+    @apply px-3 py-2.5 text-center font-medium uppercase text-ink;
+    background: var(--r-pill);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+  }
+  .rep-table thead th:first-child {
+    border-radius: 999px 0 0 999px;
+  }
+  .rep-table thead th:last-child {
+    border-radius: 0 999px 999px 0;
+  }
+  .rep-table thead th.is-winner {
+    @apply font-semibold;
+    color: var(--coral-strong);
+  }
+  .rep-table tbody td,
+  .rep-table tbody th {
+    @apply px-3.5 py-3 text-center align-top text-sm font-normal;
+    background: var(--r-row);
+    color: var(--r-soft);
+    line-height: 1.4;
+  }
+  .rep-table tbody tr:nth-child(even) > * {
+    background: var(--r-row-alt);
+  }
+  .rep-table tbody > tr > * + * {
+    border-left: 1px solid var(--r-divider);
+  }
+  .rep-table tbody > tr > :first-child {
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+  .rep-table tbody > tr > :last-child {
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+  .rep-table tbody th[scope="row"] {
+    @apply pl-5 text-left font-medium text-white;
+  }
+  .rep-col-head {
+    width: 25%;
+  }
+  .rep-table .rep-score-row > * {
+    @apply align-middle;
+  }
+  .rep-table .rep-score-row td {
+    @apply text-lg text-white;
+  }
+  .rep-table .rep-score-row td.is-winner {
+    @apply font-semibold;
+    color: var(--coral);
+  }
+  .rep-table tbody tr.rep-group-row > th {
+    @apply pb-0.5 pl-5 pt-4 text-left text-base font-semibold text-white;
+    background: none;
+  }
+  .rep-risks thead th:nth-child(1),
+  .rep-risks thead th:nth-child(4) {
+    width: 28%;
+  }
+  .rep-risks thead th:nth-child(2) {
+    width: 17%;
+  }
+  .rep-table td.rep-risk-desc {
+    @apply text-white;
+  }
+  .rep-level {
+    @apply inline-flex items-center gap-2 whitespace-nowrap;
+  }
+  .rep-level-bars {
+    @apply inline-flex gap-[0.2rem];
+  }
+  .rep-level-bars i {
+    @apply h-[0.8rem] w-[0.55rem] rounded-[0.15rem];
+    background: #45454a;
+  }
+  .rep-level-bars i.on {
+    background: var(--coral);
+  }
+
+  .rep-review + .rep-review {
+    @apply mt-11;
+  }
+  .rep-review-head {
+    @apply flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1;
+  }
+  .rep-review-name {
+    @apply text-[1.35rem] font-semibold;
+  }
+  .rep-review-score {
+    @apply text-[1.0625rem];
+    color: var(--r-soft);
+  }
+  .rep-review-score b {
+    @apply font-medium text-white;
+  }
+  .rep-tag {
+    @apply ml-3 inline-block rounded-full px-3 py-0.5 text-xs font-medium;
+    vertical-align: 0.25rem;
+    background: var(--coral-strong);
+  }
+  .rep-review-text {
+    @apply mb-5 mt-2.5 max-w-[68ch];
+    color: var(--r-soft);
+  }
+  .rep-points li,
+  .rep-conds li {
+    @apply relative pl-5;
+    color: var(--r-soft);
+  }
+  .rep-points li + li,
+  .rep-conds li + li {
+    @apply mt-1.5;
+  }
+  .rep-points li::before {
+    @apply absolute left-0 font-semibold;
+  }
+  .rep-points-plus li::before {
+    content: "+";
+    color: #fff;
+  }
+  .rep-points-minus li::before {
+    content: "\2212";
+    color: var(--coral);
+  }
+  .rep-conditions {
+    @apply mt-3 rounded-xl px-5 py-3;
+    background: var(--r-row);
+    color: var(--r-soft);
+  }
+  .rep-conditions b {
+    @apply font-medium text-white;
+  }
+  .rep-conclusion {
+    @apply max-w-[60ch];
+    color: var(--r-soft);
+  }
+  .rep-conds li::before {
+    content: "";
+    @apply absolute left-0 h-1.5 w-1.5 rounded-full;
+    top: 0.62em;
+    background: var(--coral);
+  }
+
+  .rep-placeholder {
+    @apply grid min-h-[28rem] place-items-center content-center text-center;
+  }
+  .rep-placeholder-title {
+    @apply mt-5 text-2xl font-semibold;
+  }
+  .rep-placeholder-text {
+    @apply mt-2;
+    color: var(--r-soft);
+  }
 }
 
 @keyframes ring-fill {
@@ -702,8 +1111,16 @@
   }
 }
 
+/* Дуга растёт слева направо: смещение штриха на его длину скрывает его целиком */
+@keyframes gauge-fill {
+  from {
+    stroke-dashoffset: var(--gauge);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ring-arc,
+  .rep-gauge-arc,
   .field-error,
   .issue-chip {
     animation: none;
@@ -736,5 +1153,61 @@
   .vs-others:hover,
   .point:hover::before {
     transform: none;
+  }
+}
+
+/* Печать страницы отчёта из браузера (Ctrl+P). Основной путь: кнопка «Скачать PDF», серверный PDF.
+   Именованная страница report: тёмные поля листа только у отчёта, остальные страницы не затронуты. */
+@page report {
+  size: A4;
+  margin: 14mm 0;
+  background: #161616;
+}
+
+@media print {
+  .report-screen {
+    page: report;
+    padding: 0;
+    overflow: visible;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .rep-doc {
+    max-width: none;
+    padding: 0 16mm;
+    overflow: visible;
+    box-shadow: none;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .rep-doc * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .rep-orb {
+    display: none;
+  }
+  .rep-break {
+    break-before: page;
+  }
+  .rep-review,
+  .rep-split,
+  .rep-scores,
+  .rep-table tr {
+    break-inside: avoid;
+  }
+  .rep-section-title {
+    break-after: avoid;
+  }
+  .rep-scroll {
+    overflow: visible;
+  }
+  .rep-table {
+    min-width: 0;
+  }
+  .rep-gauge-arc {
+    animation: none;
   }
 }

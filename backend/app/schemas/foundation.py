@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, ValidationInfo, field_validator, model_validator
 
 from app.services.reference import PRELIMINARY_WARNING, REGION_ALIASES, region_ids
 
@@ -197,6 +197,116 @@ class ReportResponse(BaseModel):
     warning: str
     provider: Literal["deepseek", "template"]
     report_text: str = Field(description="Полный текст ТЭО для экспорта")
+
+
+class EngineeringReportRequest(BaseModel):
+    input: FoundationInput
+    result: FoundationRecommendResponse
+
+
+def _lower(value: object) -> object:
+    return value.strip().lower() if isinstance(value, str) else value
+
+
+RiskProbability = Annotated[Literal["низкая", "средняя", "высокая"], BeforeValidator(_lower)]
+RiskScope = Annotated[FoundationType | Literal["общие"], BeforeValidator(_lower)]
+
+# Критерии сравнительной матрицы: фиксированный список и порядок (план отчёта, раздел 3)
+MATRIX_CRITERIA: tuple[str, ...] = (
+    "Несущая способность",
+    "Осадки и деформации",
+    "Влияние грунтовых вод",
+    "Климатические воздействия (промерзание)",
+    "Сейсмостойкость",
+)
+
+
+class MatrixRow(BaseModel):
+    criterion: str
+    assessments: dict[FoundationType, str]
+
+
+class ReviewItem(BaseModel):
+    type: FoundationType
+    applicability: str = Field(min_length=1)
+    advantages: list[str] = Field(min_length=1)
+    disadvantages: list[str] = Field(min_length=1)
+    conditions: str = Field(min_length=1)
+
+
+class RiskItem(BaseModel):
+    scope: RiskScope
+    description: str = Field(min_length=1)
+    probability: RiskProbability
+    consequence: str = Field(min_length=1)
+    mitigation: str = Field(min_length=1)
+
+
+class EngineeringReportContent(BaseModel):
+    """Разделы отчёта из запроса B.
+
+    Проверки против топ-3 выполняются, если в context передан {"top3": [типы по порядку]}.
+    """
+
+    summary_reason: str = Field(min_length=1)
+    matrix: list[MatrixRow]
+    review: list[ReviewItem]
+    risks: list[RiskItem]
+    conclusion: str = Field(min_length=1)
+    application_conditions: list[str] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _match_top3(self, info: ValidationInfo) -> "EngineeringReportContent":
+        top: list[str] | None = (info.context or {}).get("top3")
+        if not top:
+            return self
+        if [item.type for item in self.review] != top:
+            raise ValueError(f"review должен содержать типы {top} в том же порядке")
+        if [row.criterion for row in self.matrix] != list(MATRIX_CRITERIA):
+            raise ValueError(f"matrix должна содержать критерии {list(MATRIX_CRITERIA)}")
+        for row in self.matrix:
+            missing = [t for t in top if t not in row.assessments]
+            if missing:
+                raise ValueError(f"matrix «{row.criterion}»: нет оценки для {missing}")
+            row.assessments = {t: row.assessments[t] for t in top}
+        for risk in self.risks:
+            if risk.scope != "общие" and risk.scope not in top:
+                raise ValueError(f"risks: scope {risk.scope} не входит в топ-3")
+        uncovered = [t for t in top if not any(r.scope == t for r in self.risks)]
+        if uncovered:
+            raise ValueError(f"risks: нет рисков для {uncovered}")
+        return self
+
+
+class ReportMeta(BaseModel):
+    # Формат ограничен: отчёт для PDF приходит от клиента, номер идёт в заголовок и в шаблон
+    report_number: str = Field(pattern=r"^[0-9A-Za-z-]{1,32}$")
+    date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$", description="Дата формирования, ISO 8601")
+    version: str
+
+
+class RankedFoundation(BaseModel):
+    type: FoundationType
+    name: str
+    score: int = Field(ge=0, le=100)
+
+
+class SourceGroup(BaseModel):
+    title: str
+    rows: list[ReportParameter]
+
+
+class EngineeringReportResponse(EngineeringReportContent):
+    meta: ReportMeta
+    top3: list[RankedFoundation]
+    source_data: list[SourceGroup]
+    provider: Literal["deepseek", "template"] = Field(description="Только для отладки, в отчёте не выводится")
+
+
+class EngineeringPdfRequest(BaseModel):
+    """Готовый отчёт со страницы: PDF повторяет его без нового запроса к LLM."""
+
+    report: EngineeringReportResponse
 
 
 class OptionItem(BaseModel):

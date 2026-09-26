@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.main import app
-from app.services import comparison, jev_client
+from app.services import comparison, deepseek_client, engineering_report, jev_client
 
 client = TestClient(app)
 
@@ -384,6 +384,213 @@ def test_analyze_without_llm_key_is_502():
     result = recommend().json()
     res = client.post("/api/foundation/analyze", json={"input": SPEC_INPUT, "result": result})
     assert res.status_code == 502
+
+
+# --- Инженерный отчёт (запрос B) ------------------------------------------------
+
+CRITERIA = list(engineering_report.MATRIX_CRITERIA)
+
+
+def report_answer(order):
+    """Валидный JSON запроса B для топ-3 в порядке order."""
+    return {
+        "summary_reason": "Выбор обусловлен высоким уровнем грунтовых вод и сейсмичностью 7 баллов.",
+        "matrix": [{"criterion": c, "assessments": {t: f"Оценка {t} по критерию" for t in order}} for c in CRITERIA],
+        "review": [
+            {
+                "type": t,
+                "applicability": "Вариант передаёт нагрузку на основание. Применим при заданных условиях.",
+                "advantages": ["Снижает риск неравномерной осадки", "Устойчив к морозному пучению"],
+                "disadvantages": ["Требует специальной техники"],
+                "conditions": "Применим при подтверждении несущего слоя изысканиями.",
+            }
+            for t in order
+        ],
+        "risks": [
+            *(
+                {
+                    "scope": t,
+                    "description": f"Неравномерная осадка ({t})",
+                    "probability": "средняя",
+                    "consequence": "Трещины в несущих стенах.",
+                    "mitigation": "Инженерно-геологические изыскания.",
+                }
+                for t in order
+            ),
+            {
+                "scope": "общие",
+                "description": "Обводнение котлована",
+                "probability": "Высокая",
+                "consequence": "Разуплотнение грунта основания.",
+                "mitigation": "Водопонижение на период работ.",
+            },
+        ],
+        "conclusion": "Рекомендован первый вариант. Альтернативы применимы при дополнительных мероприятиях.",
+        "application_conditions": ["Результат предварительный", "Требуются инженерно-геологические изыскания"],
+    }
+
+
+def use_deepseek(monkeypatch, *contents):
+    """LLM через поддельный транспорт httpx; ответы (dict или строка) по очереди, последний повторяется."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    get_settings.cache_clear()
+    prompts = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        prompts.append(json.loads(request.content)["messages"][1]["content"])
+        content = contents[min(len(prompts), len(contents)) - 1]
+        text = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
+        return httpx.Response(200, json={"choices": [{"message": {"content": text}, "finish_reason": "stop"}]})
+
+    monkeypatch.setattr(
+        deepseek_client, "make_client", lambda timeout: httpx.Client(transport=httpx.MockTransport(handler))
+    )
+    return prompts
+
+
+def engineering(result):
+    return client.post("/api/foundation/report/engineering", json={"input": SPEC_INPUT, "result": result})
+
+
+def top3_order(result):
+    return [o["type"] for o in _all(result)][:3]
+
+
+def test_engineering_report_contract(monkeypatch):
+    result = recommend().json()
+    order = top3_order(result)
+    prompts = use_deepseek(monkeypatch, report_answer(order))
+
+    res = engineering(result)
+    assert res.status_code == 200, res.text
+    body = res.json()
+
+    assert [t["type"] for t in body["top3"]] == order
+    assert [t["score"] for t in body["top3"]] == [o["score"] for o in _all(result)][:3]
+    assert [r["type"] for r in body["review"]] == order
+    assert [row["criterion"] for row in body["matrix"]] == CRITERIA
+    assert all(list(row["assessments"]) == order for row in body["matrix"])
+    assert body["risks"][-1]["probability"] == "высокая"
+    assert body["provider"] == "deepseek"
+    assert body["meta"]["version"] == "1.0" and len(body["meta"]["report_number"]) == 8
+
+    source = {r["label"]: r["value"] for g in body["source_data"] for r in g["rows"]}
+    assert source["Тип грунта"] == "Суглинок"
+    assert source["Площадь здания"] == "450 м²"
+    assert source["Климат"].startswith("Резко континентальный")
+
+    # Один запрос: топ-3 с оценками Jev, без стоимости и без названия региона
+    assert len(prompts) == 1
+    prompt = prompts[0]
+    assert f"оценка пригодности {result['recommended']['score']} из 100" in prompt
+    assert "cost" not in prompt and "руб" not in prompt
+    assert "Красноярский" not in prompt
+
+
+def test_engineering_report_bad_json_retried_then_502(monkeypatch):
+    prompts = use_deepseek(monkeypatch, "Отчёт готов, но без JSON")
+    res = engineering(recommend().json())
+    assert res.status_code == 502
+    assert len(prompts) == 2
+
+
+def _break(answer, how):
+    if how == "foreign_type":
+        answer["review"][1]["type"] = "column"
+    elif how == "empty_advantages":
+        answer["review"][0]["advantages"] = []
+    elif how == "bad_probability":
+        answer["risks"][0]["probability"] = "очень высокая"
+    elif how == "incomplete_matrix":
+        answer["matrix"] = answer["matrix"][:-1]
+    elif how == "missing_assessment":
+        answer["matrix"][0]["assessments"].pop(next(iter(answer["matrix"][0]["assessments"])))
+    elif how == "foreign_scope":
+        answer["risks"][0]["scope"] = "column"
+    return answer
+
+
+@pytest.mark.parametrize(
+    "how",
+    ["foreign_type", "empty_advantages", "bad_probability", "incomplete_matrix", "missing_assessment", "foreign_scope"],
+)
+def test_engineering_report_schema_violation_retried_then_502(monkeypatch, how):
+    result = recommend().json()
+    order = top3_order(result)
+    assert "column" not in order
+    prompts = use_deepseek(monkeypatch, _break(report_answer(order), how))
+    res = engineering(result)
+    assert res.status_code == 502, res.text
+    assert len(prompts) == 2
+
+
+def test_engineering_report_retry_recovers(monkeypatch):
+    result = recommend().json()
+    order = top3_order(result)
+    prompts = use_deepseek(monkeypatch, _break(report_answer(order), "incomplete_matrix"), report_answer(order))
+    assert engineering(result).status_code == 200
+    assert len(prompts) == 2
+
+
+def test_engineering_report_drops_off_topic(monkeypatch):
+    result = recommend().json()
+    order = top3_order(result)
+    answer = report_answer(order)
+    answer["review"][0]["advantages"].append("Высокая стоимость устройства ростверка")
+    answer["review"][0]["applicability"] += " Расчёт выполняется по СП 24.13330."
+    answer["application_conditions"].append("Экономия 15% бюджета")
+    answer["risks"].append({**answer["risks"][0], "description": "Увеличение сроков строительства"})
+    answer["matrix"][0]["criterion"] = "несущая способность "
+    use_deepseek(monkeypatch, answer)
+
+    body = engineering(result).json()
+    clean = report_answer(order)
+    assert body["review"][0]["advantages"] == clean["review"][0]["advantages"]
+    assert body["review"][0]["applicability"] == clean["review"][0]["applicability"]
+    assert body["application_conditions"] == clean["application_conditions"]
+    assert all("сроков" not in r["description"] for r in body["risks"])
+    assert body["matrix"][0]["criterion"] == "Несущая способность"
+
+
+def test_engineering_report_without_llm_key_is_502():
+    assert engineering(recommend().json()).status_code == 502
+
+
+def _report_body(monkeypatch):
+    result = recommend().json()
+    answer = report_answer(top3_order(result))
+    answer["summary_reason"] = "Грунт <script>alert(1)</script> учтён."
+    use_deepseek(monkeypatch, answer)
+    return engineering(result).json()
+
+
+def test_engineering_pdf_html_has_all_sections(monkeypatch):
+    from app.schemas.foundation import EngineeringReportResponse
+    from app.services.engineering_pdf import render_html
+
+    body = _report_body(monkeypatch)
+    html = render_html(EngineeringReportResponse.model_validate(body))
+    for title in ("Резюме", "Исходные данные", "Сравнительная матрица", "Детальный разбор", "Риски", "Вывод"):
+        assert title in html
+    assert body["meta"]["report_number"] in html
+    assert "<script>alert" not in html and "&lt;script&gt;" in html
+    for word in ("deepseek", "нейросет", "модел"):
+        assert word not in html.lower()
+
+
+def test_engineering_pdf_endpoint(monkeypatch):
+    from app.api import foundation as api
+
+    body = _report_body(monkeypatch)
+    monkeypatch.setattr(api, "render_pdf", lambda report: b"%PDF-1.7 test")
+    res = client.post("/api/foundation/report/engineering/pdf", json={"report": body})
+    assert res.status_code == 200, res.text
+    assert res.headers["content-type"] == "application/pdf"
+    assert body["meta"]["report_number"] in res.headers["content-disposition"]
+    assert res.content == b"%PDF-1.7 test"
+
+    body["meta"]["report_number"] = 'X"; evil="1'
+    assert client.post("/api/foundation/report/engineering/pdf", json={"report": body}).status_code == 422
 
 
 def _all(body):

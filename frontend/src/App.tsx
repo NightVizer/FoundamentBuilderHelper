@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { InputPage } from "./pages/InputPage";
+import { ReportPage } from "./pages/ReportPage";
 import { ResultsPage } from "./pages/ResultsPage";
 import type { FoundationInput, RecommendResponse, SiteConditions } from "./types/foundation";
 
@@ -55,6 +56,7 @@ export default function App() {
             <ResultsPage
               calc={calc}
               onError={fail}
+              onOpenReport={() => navigate("/report")}
               onNewCalculation={() => {
                 setCalc(null);
                 navigate("/");
@@ -64,6 +66,10 @@ export default function App() {
             <Navigate to="/" replace />
           )
         }
+      />
+      <Route
+        path="/report"
+        element={calc ? <ReportPage calc={calc} onBack={() => navigate(-1)} /> : <Navigate to="/" replace />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
